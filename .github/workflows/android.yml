@@ -12,19 +12,19 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Set up JDK 17 (Required for Android)
+    - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
         
-    - name: Setup Android SDK
-      uses: android-actions/setup-android@v3
-        
-    - name: Build APK
+    - name: Install Android SDK and Build Tools
       run: |
-        chmod +x gradlew
-        ./gradlew assembleDebug
+        sudo apt update
+        sudo apt install -y android-sdk android-sdk-platform-34 android-sdk-build-tools-34-0-0 gradle
+        
+    - name: Build APK with Gradle
+      run: gradle assembleDebug
         
     - name: Upload APK
       uses: actions/upload-artifact@v4
