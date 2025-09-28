@@ -1,0 +1,12 @@
+# Build files
+/build/
+/app/build/
+*.apk
+*.ap_
+*.aab
+
+# Gradle (optional - can include or exclude)
+/gradle/
+/gradlew
+/gradlew.bat
+.gradle/
