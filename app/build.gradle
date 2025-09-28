@@ -1,0 +1,49 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    compileSdk 34
+    buildToolsVersion "34.0.0"
+
+    defaultConfig {
+        applicationId "com.cliui"
+        minSdk 26
+        targetSdk 34
+        versionCode 25
+        versionName "2.0"
+        
+        compileOptions {
+            sourceCompatibility JavaVersion.VERSION_11
+            targetCompatibility JavaVersion.VERSION_11
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        
+        fdroid {
+            applicationIdSuffix ".fdroid"
+            versionNameSuffix "-fdroid"
+        }
+    }
+}
+
+dependencies {
+    // F-Droid compatible dependencies only
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.9.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.telephony:telephony:1.2.1'
+    implementation 'androidx.core:core:1.10.1'
+    implementation 'androidx.biometric:biometric:1.1.0'
+    
+    // Pure Java SSH/SFTP (F-Droid compatible)
+    implementation 'com.hierynomus:sshj:0.33.0'
+    
+    // No Google Play Services
+    // No proprietary dependencies
+}

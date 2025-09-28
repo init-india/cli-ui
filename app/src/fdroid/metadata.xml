@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<application>
+    <meta-data android:name="fdroid.md5" android:value="d41d8cd98f00b204e9800998ecf8427e" />
+    <meta-data android:name="fdroid.versionCode" android:value="25" />
+    <meta-data android:name="fdroid.versionName" android:value="2.0" />
+    
+    <category name="Productivity" />
+    <license name="GPL-3.0-only" />
+    <description>SmartCLI - Command Line Interface for Android. Control your smartphone via Linux-style commands. Open source and F-Droid compatible.</description>
+    <summary>CLI-based smartphone interface with Linux command compatibility</summary>
+    <website>https://github.com/init-india/cli-ui</website>
+    <source-code>https://github.com/init-india/cli-ui</source-code>
+    <issue-tracker>https://github.com/init-india/issues</issue-tracker>
+    <translation>https://github.com/init-india/cli-ui/tree/master/app/src/main/res</translation>
+    
+    <screenshots>
+        <screenshot url="https://example.com/screenshot1.png" />
+        <screenshot url="https://example.com/screenshot2.png" />
+    </screenshots>
+    
+    <!-- No anti-features - completely FOSS -->
+</application>
