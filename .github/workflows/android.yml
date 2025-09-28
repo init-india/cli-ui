@@ -18,19 +18,13 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
         
-    - name: Verify files exist
+    - name: Build with Gradle (auto-downloads everything)
       run: |
-        echo "Checking project structure:"
-        ls -la
-        ls -la gradle/wrapper/
-        ./gradlew --version
-        
-    - name: Build with Gradle
-      run: ./gradlew assembleDebug --stacktrace
+        # Let Gradle handle everything automatically
+        gradle assembleDebug --stacktrace
         
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: SmartCLI-App
         path: app/build/outputs/apk/debug/app-debug.apk
-        retention-days: 30
