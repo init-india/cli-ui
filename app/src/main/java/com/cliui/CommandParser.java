@@ -1,4 +1,3 @@
-
 package com.cliui;
 
 import android.content.Context;
@@ -7,6 +6,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
 import com.cliui.modules.*;
+import com.cliui.utils.NotificationManager;
+
+
+
 
 public class CommandParser {
     private Context context;
@@ -14,8 +17,7 @@ public class CommandParser {
     private Stack<String> contextStack;
     private TelephonyManager telephonyManager;  // ADD THIS
 
-    import com.cliui.utils.NotificationManager;
-    
+   
     public CommandParser(Context context) {
         this.context = context;
         this.modules = new HashMap<>();
