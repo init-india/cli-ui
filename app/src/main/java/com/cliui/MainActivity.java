@@ -6,6 +6,8 @@ import android.widget.EditText;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
+import android.telephony.TelephonyManager;
+import android.content.Context;
 
 public class MainActivity extends AppCompatActivity {
     
@@ -13,6 +15,7 @@ public class MainActivity extends AppCompatActivity {
     private EditText commandInput;
     private ScrollView terminalScroll;
     private CommandParser commandParser;
+    private TelephonyManager telephonyManager;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -21,7 +24,36 @@ public class MainActivity extends AppCompatActivity {
         
         initializeComponents();
         setupCommandParser();
+        initializeTelephony();  // ADD THIS LINE
         showWelcomeMessage();
+    }
+    
+    // ADD THIS METHOD FOR TELEPHONY
+    private void initializeTelephony() {
+        telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+        
+        // Check if this is F-Droid build or Google Play build
+        if (getPackageName().endsWith(".fdroid")) {
+            // F-Droid version - use basic TelephonyManager
+            appendToTerminal("F-Droid Edition - Basic Telephony", "#FFFF00");
+        } else {
+            // Google Play version - can use enhanced features
+            appendToTerminal("Google Play Edition - Enhanced Telephony", "#FFFF00");
+        }
+        
+        // Basic telephony info available to both versions
+        try {
+            String networkOperator = telephonyManager.getNetworkOperatorName();
+            if (networkOperator != null && !networkOperator.isEmpty()) {
+                appendToTerminal("Network: " + networkOperator, "#00FFFF");
+            }
+            
+            boolean isSimAvailable = telephonyManager.getSimState() == TelephonyManager.SIM_STATE_READY;
+            appendToTerminal("SIM: " + (isSimAvailable ? "Available" : "Not Available"), "#00FFFF");
+            
+        } catch (SecurityException e) {
+            appendToTerminal("Telephony permission required", "#FF0000");
+        }
     }
     
     private void initializeComponents() {

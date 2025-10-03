@@ -16,12 +16,12 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_11  // Your app uses Java 11
-        targetCompatibility JavaVersion.VERSION_11  // Your app uses Java 11
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
 
     kotlinOptions {
-        jvmTarget = '11'  // Your app uses Java 11
+        jvmTarget = '11'
     }
 
     buildTypes {
@@ -40,12 +40,14 @@ android {
 }
 
 dependencies {
+    // COMMON dependencies (both F-Droid and Google Play)
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.9.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-
-    implementation 'androidx.telephony:telephony-ktx:1.0.0'
-
     implementation 'androidx.core:core-ktx:1.10.1'
     implementation 'androidx.biometric:biometric:1.1.0'
+
+    // F-Droid version - NO Google dependencies
+    // Uses platform TelephonyManager (built into Android)
+    fdroidImplementation 'androidx.appcompat:appcompat:1.6.1'  // Re-declare if needed
 }
