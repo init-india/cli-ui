@@ -14,19 +14,10 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Set up JDK 17 (for Android SDK)
+    - name: Set up JDK 17 (for Android Gradle Plugin)
       uses: actions/setup-java@v4
       with:
         java-version: '17'
-        distribution: 'temurin'
-        
-    - name: Setup Android SDK
-      uses: android-actions/setup-android@v3
-      
-    - name: Set up JDK 11 (for project build)
-      uses: actions/setup-java@v4
-      with:
-        java-version: '11'
         distribution: 'temurin'
         
     - name: Make gradlew executable
@@ -45,4 +36,4 @@ jobs:
         path: |
           app/build/outputs/apk/release/
           app/build/outputs/apk/fdroid/
-        retention-days: 30
+       
