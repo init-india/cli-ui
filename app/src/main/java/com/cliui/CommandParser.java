@@ -1,3 +1,4 @@
+
 package com.cliui;
 
 import android.content.Context;
@@ -12,6 +13,8 @@ public class CommandParser {
     private Map<String, CommandModule> modules;
     private Stack<String> contextStack;
     private TelephonyManager telephonyManager;  // ADD THIS
+
+    import com.cliui.utils.NotificationManager;
     
     public CommandParser(Context context) {
         this.context = context;
