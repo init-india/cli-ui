@@ -57,9 +57,6 @@ dependencies {
     // For email functionality
     implementation 'com.sun.mail:android-mail:1.6.7'
     implementation 'com.sun.mail:android-activation:1.6.7'
-}
-
-
 
     // F-Droid version - NO Google dependencies
     // Uses platform TelephonyManager (built into Android)
