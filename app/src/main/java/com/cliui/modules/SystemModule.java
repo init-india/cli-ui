@@ -1,52 +1,87 @@
-package com.cliui.modules;
-
-import android.content.Context;
-import android.hardware.camera2.CameraManager;
-import android.location.LocationManager;
-
 public class SystemModule implements CommandModule {
     private Context context;
-    private boolean flashEnabled = false;
-    private boolean locationEnabled = false;
-    private boolean micEnabled = true;
-    private boolean cameraEnabled = false;
+    private PermissionManager permissionManager;
     
-    public SystemModule(Context context) {
-        this.context = context;
-    }
-    
-    @Override
     public String execute(String[] tokens) {
-        String command = tokens[0];
+        if (!permissionManager.canExecute(tokens[0])) {
+            return "🔧 System control requires permissions\nType command again to grant";
+        }
+        
+        String command = tokens[0].toLowerCase();
         
         switch (command) {
             case "flash":
-                flashEnabled = !flashEnabled;
-                return flashEnabled ? "🔦 Flashlight ON\n[Open camera app to use]" : "🔦 Flashlight OFF";
-                
+                return toggleFlashlight();
             case "location":
-                locationEnabled = !locationEnabled;
-                LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
-                boolean gpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
-                boolean networkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
-                
-                return "📍 Location Services:\n" +
-                       "GPS: " + (gpsEnabled ? "Enabled" : "Disabled") + "\n" +
-                       "Network: " + (networkEnabled ? "Enabled" : "Disabled") + "\n" +
-                       "[Open location settings to change]";
-                
+                return toggleLocation();
             case "mic":
-                micEnabled = !micEnabled;
-                return micEnabled ? "🎤 Microphone enabled" : "🎤 Microphone disabled\n[App permissions required]";
-                
+                return toggleMicrophone();
             case "camera":
-                // Open device camera app
-                android.content.Intent intent = new android.content.Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
-                context.startActivity(intent);
-                return "📷 Opening camera app...";
-                
+                return toggleCamera();
+            case "alarm":
+                return handleAlarmCommand(tokens);
+            case "time":
+                return showTime();
+            case "date":
+                return showDate();
             default:
                 return "Unknown system command";
         }
+    }
+    
+    private String toggleFlashlight() {
+        // Use Shizuku to control flashlight
+        boolean currentState = isFlashlightEnabled();
+        
+        if (ShizukuManager.executeCommand(currentState ? "cmd flashlight disable" : "cmd flashlight enable")) {
+            return "🔦 Flashlight " + (currentState ? "OFF" : "ON");
+        }
+        return "❌ Failed to toggle flashlight";
+    }
+    
+    private String toggleLocation() {
+        boolean currentState = isLocationEnabled();
+        
+        if (ShizukuManager.executeCommand(
+            currentState ? 
+            "settings put secure location_providers_allowed -gps" :
+            "settings put secure location_providers_allowed +gps"
+        )) {
+            return "📍 Location " + (currentState ? "OFF" : "ON");
+        }
+        return "❌ Failed to toggle location";
+    }
+    
+    private String toggleMicrophone() {
+        // This would require more complex audio routing control
+        return "🎤 Microphone control requires advanced audio permissions";
+    }
+    
+    private String handleAlarmCommand(String[] tokens) {
+        if (tokens.length == 1) {
+            return showAlarms();
+        } else if (tokens.length >= 2) {
+            return setAlarm(tokens);
+        }
+        return "Usage: alarm | alarm set HH:MM [message]";
+    }
+    
+    private String showAlarms() {
+        // Use Shizuku to list alarms
+        String alarms = ShizukuManager.executeCommandWithOutput("dumpsys alarm");
+        // Parse alarms and display
+        return "⏰ Active Alarms:\n[Alarm list from system]\n\n💡 Type 'alarm set HH:MM' to set new alarm";
+    }
+    
+    private String showTime() {
+        // Use Linux date command via Shizuku
+        String time = ShizukuManager.executeCommandWithOutput("date '+%H:%M:%S'");
+        return "🕒 Current Time: " + time.trim();
+    }
+    
+    private String showDate() {
+        // Use Linux date command via Shizuku
+        String date = ShizukuManager.executeCommandWithOutput("date '+%d-%b-%Y'");
+        return "📅 Current Date: " + date.trim();
     }
 }

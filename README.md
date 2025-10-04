@@ -1,277 +1,334 @@
-SmartCLI transforms your Android smartphone into a command-line interface. Control your phone using Linux-style commands with a beautiful TUI (Terminal User Interface).
-🚀 Quick Start
+SmartCLI Phone - Complete Command Reference
+📱 Overview
 
-    Install SmartCLI from F-Droid
-
-    Set as default launcher when prompted
-
-    Type help to see available commands
-
-    Start controlling your phone via CLI!
-
-📋 Available Commands
+SmartCLI Phone transforms your Android device into a command-line interface smartphone. Control everything through CLI commands - calls, messages, navigation, settings, and more.
 📞 PHONE & CALLS
-bash
+Basic Call Commands
+text
 
-call                    # Show call history
-call [contact]          # Call a contact/number
-call [number]           # Call specific number
+call [number]           - Make phone call to number
+call [contact]          - Make call to contact name
+call                    - Show call history
 
-Examples:
-bash
+Advanced Call Controls (During Active Calls)
+text
 
-call                    # View recent calls
-call john               # Call John
-call +1555123456        # Call specific number
+ans                     - Answer incoming call
+rej                     - Reject incoming call
+end                     - End current call
+hold                    - Put call on hold
+unhold                  - Resume held call
+mute                    - Mute microphone
+unmute                  - Unmute microphone
+speakeron               - Enable speakerphone
+speakeroff              - Disable speakerphone
+
+Conference Call Features
+text
+
+call [number]           - Add another call during active call
+merge                   - Merge active calls into conference
+drop [contact]          - Remove participant from conference
+status                  - Show current call status
 
 💬 SMS & MESSAGING
-bash
+SMS Commands
+text
 
-sms                     # Show recent messages
-sms [contact]           # View conversation with contact
-sms [contact] [message] # Send SMS to contact
+sms                     - Show recent messages (20 per page)
+sms more                - Show next 20 messages
+sms all                 - Show all messages
+sms [contact]           - Show conversation with contact
+sms [contact] [message] - Send message directly
+sms del                 - Enter delete mode
 
-Examples:
-bash
+Interactive SMS Workflow
+text
 
-sms                     # View message inbox
-sms john                # Open conversation with John
-sms john "Hello there!" # Send message to John
+[message_id]            - Open specific message (with authentication)
+reply                   - Reply to opened message
+send                    - Send composed message
+exit                    - Return to message list
 
 🗺️ NAVIGATION & MAPS
-bash
+Map Commands
+text
 
-map                     # Show recent locations
-map [destination]       # Navigate to destination
-map [source];[dest]     # Route from source to destination
-nav                     # Start navigation
+map                     - Show recent location searches
+map [destination]       - Search and navigate to destination
+map [source];[dest]     - Route with specific source
 
-Examples:
-bash
+Navigation Flow
+text
 
-map                     # View location history
-map starbucks           # Navigate to Starbucks
-map home;office         # Route from home to office
-nav                     # Start active navigation
-
-📶 CONNECTIVITY
-bash
-
-wifi                    # Toggle WiFi on/off
-bluetooth               # Toggle Bluetooth on/off  
-hotspot                 # Toggle hotspot on/off
-
-Examples:
-bash
-
-wifi                    # Turn WiFi on (if off) or show status
-bluetooth               # Toggle Bluetooth
-hotspot                 # Toggle mobile hotspot
-
-⚡ SYSTEM CONTROLS
-bash
-
-flash                   # Toggle flashlight on/off
-location                # Show location status
-mic                     # Toggle microphone on/off
-camera                  # Open camera app
-
-Examples:
-bash
-
-flash                   # Turn flashlight on/off
-location                # Check location services status
-camera                  # Launch camera application
-
-📧 EMAIL & COMMUNICATION
-bash
-
-mail                    # Show recent emails
-mail compose            # Compose new email
-mail open [1-3]         # Read specific email
-whatsapp                # Open WhatsApp
-
-Examples:
-bash
-
-mail                    # View email inbox
-mail compose            # Write new email
-mail open 1             # Read first email
-whatsapp                # Launch WhatsApp
+[1-5]                   - Select location from suggestions
+nav                     - Start navigation with voice guidance
+alt                     - Show alternative routes
+mute/unmute             - Toggle voice guidance
+pause/resume            - Pause/resume navigation
+status                  - Show navigation status
 
 ⚙️ SYSTEM SETTINGS
-bash
+Display Settings
+text
 
-settings                # Show all settings
-settings display        # Display settings
-settings sound          # Sound settings  
-settings security       # Security settings
-settings brightness [0-100]  # Change brightness
-settings media [0-100]       # Change media volume
-settings ringtone [name]     # Change ringtone
+settings display brightness <0-100>    - Set screen brightness
+settings display dark on/off           - Toggle dark mode
+settings display rotation on/off       - Toggle auto-rotate
+settings display timeout <seconds>     - Set screen timeout
 
-Examples:
-bash
+Sound Settings
+text
 
-settings                # View all system settings
-settings display        # Show display options
-settings brightness 75  # Set brightness to 75%
-settings media 80       # Set media volume to 80%
+settings sound media <0-100>           - Set media volume
+settings sound call <0-100>            - Set call volume
+settings sound alarm <0-100>           - Set alarm volume
+settings sound vibrate on/off          - Toggle vibration
 
-🔔 NOTIFICATIONS
-bash
+Quick Settings
+text
 
-notifications           # Show notification log
+settings                                - Show all settings categories
+settings display                       - Show display settings
+settings sound                         - Show sound settings
+settings security                      - Show security settings
+
+🔗 CONNECTIVITY
+WiFi Control
+text
+
+wifi                    - Toggle WiFi on/off
+wifi                    - Show available networks (when on)
+[1-10]                  - Connect to selected network
+
+Bluetooth Control
+text
+
+bluetooth               - Toggle Bluetooth on/off
+bluetooth               - Show paired devices (when on)
+[1-10]                  - Connect to selected device
+
+Other Connectivity
+text
+
+hotspot                 - Toggle mobile hotspot
+location                - Toggle location services
+
+🖥️ SYSTEM CONTROLS
+Hardware Controls
+text
+
+flash                   - Toggle flashlight
+camera                  - Open camera app
+mic                     - Toggle microphone access
+
+System Information
+text
+
+telephony               - Show phone information
+telephony network       - Show network info
+telephony sim           - Show SIM status
+telephony signal        - Show signal strength
+
+📧 EMAIL & GMAIL
+Email Commands
+text
+
+mail                    - Show inbox (20 emails per page)
+mail more               - Show next 20 emails
+mail all                - Show all emails
+mail compose            - Compose new email
+mail [sender]           - Filter by sender
+mail search [query]     - Search emails
+mail del                - Delete emails
+
+Email Workflow
+text
+
+[email_id]              - Open specific email
+1/reply                 - Reply to email
+2/replyall              - Reply all to email
+send                    - Send composed email
+to [email]              - Set recipient
+cc [email]              - Set CC recipient
+bcc [email]             - Set BCC recipient
+subject [title]         - Set email subject
+attach [file]           - Add attachment
+
+💚 WHATSAPP INTEGRATION
+WhatsApp Commands
+text
+
+wh                      - Show quick actions & recent contacts
+wh [contact]            - Start messaging contact
+wh call [contact]       - Call contact via WhatsApp
+whcall                  - Show call history
+
+WhatsApp Workflow
+text
+
+[1-5]                   - Select contact from list
+[message]               - Type message content
+send                    - Send WhatsApp message
+1                       - Audio call
+2                       - Video call
+
+👥 CONTACTS MANAGEMENT
+Contact Commands
+text
+
+contact                 - Show all contacts (alphabetical)
+contact add             - Add new contact
+contact edit [name]     - Edit existing contact
+contact del             - Delete contacts
+
+Contact Workflow
+text
+
+name [full_name]        - Set contact name
+number [phone]          - Set phone number
+email [address]         - Set email address
+save                    - Save contact
+[1,3,5]                 - Select contacts to delete (comma separated)
+confirm                 - Confirm deletion
 
 🐧 LINUX ENVIRONMENT
-bash
+Direct Linux Commands
+text
 
-# Basic Linux commands available
-ls, cd, pwd, cat, grep, find, ps, top, etc.
+[any_linux_command]     - Execute Linux command directly
+
+File Operations
+text
+
+ls [path]               - List directory contents
+cat [file]              - Display file content
+pwd                     - Show current directory
+df                      - Show disk usage
+ps                      - Show running processes
+
+Package Management
+text
+
+pkg list                - List installed packages
+pkg info [package]      - Show package information
+pkg install [package]   - Install package
+pkg remove [package]    - Remove package
+pkg enable [package]    - Enable package
+pkg disable [package]   - Disable package
+
+Linux Environment
+text
+
+linux                   - Show Linux environment info
+shell                   - Enter interactive shell mode
+files                   - Show available file operations
+sysinfo                 - Show system information
 
 🛠️ UTILITY COMMANDS
-bash
+System Utilities
+text
 
-help                    # Show this help menu
-clear                   # Clear terminal screen
-exit                    # Return to previous context
+clear                   - Clear terminal screen
+help                    - Show help information
+exit                    - Exit current mode/return to main CLI
+apps                    - Show installed applications
 
-🎨 TUI FEATURES
-Color Coding:
+Authentication
+text
 
-    🟢 Green - Command prompts and success messages
+[Biometric/PIN]         - Required for sensitive operations:
+                          - Reading messages/emails
+                          - Contact management
+                          - Security settings
 
-    ⚪ White - Command output and information
+🔐 PERMISSION REQUIREMENTS
+Required Permissions
 
-    🔴 Red - Error messages and warnings
+    Phone: CALL_PHONE, READ_PHONE_STATE
 
-    🟡 Yellow - Important notifications
+    SMS: SEND_SMS, READ_SMS, RECEIVE_SMS
 
-Symbols:
+    Contacts: READ_CONTACTS, WRITE_CONTACTS
 
-    ✅ Success actions
+    Location: ACCESS_FINE_LOCATION
 
-    ❌ Errors and failures
+    Storage: READ_EXTERNAL_STORAGE
 
-    💡 Information and tips
+    Camera/Mic: CAMERA, RECORD_AUDIO
 
-    📱 Phone operations
+Shizuku Integration
 
-    💬 Messaging
+    System controls: WiFi, Bluetooth, Hotspot, Settings
 
-    🗺️ Navigation
+    File operations: Linux file system access
 
-    📶 Connectivity
+    Package management: App installation/removal
 
-    ⚙️ Settings
+    Root commands: Advanced system operations
 
-🔐 SECURITY FEATURES
+💡 TIPS & BEST PRACTICES
+Command Patterns
 
-    Biometric authentication for sensitive operations
+    Space-separated: call 1234567890
 
-    PIN fallback support
+    Semicolon for pairs: map home;work
 
-    App-specific access controls
+    Numbers for selection: 1, 2, 3 for lists
 
-    Privacy-focused design
+    Keywords for actions: reply, send, exit
 
-🌐 OPEN SOURCE FEATURES
+State Management
 
-    ✅ F-Droid compatible - No Google dependencies
+    Use exit to return to previous state
 
-    ✅ OpenStreetMap integration - No Google Maps
+    Commands change behavior based on context
 
-    ✅ IMAP email support - No Gmail API required
+    Authentication required for private data
 
-    ✅ Pure FOSS dependencies only
+    Real-time feedback for all operations
 
-🚨 PERMISSIONS EXPLAINED
+Enhanced Features
 
-SmartCLI requests these permissions for full functionality:
+    Voice guidance during navigation
 
-    READ_SMS - View your messages
+    Biometric authentication for security
 
-    SEND_SMS - Send messages
+    Dynamic suggestions while typing
 
-    CALL_PHONE - Make phone calls
+    Pagination for long lists
 
-    LOCATION - Navigation and maps
+    Draft saving for unfinished messages
 
-    CAMERA - Flashlight control and camera access
+🚀 GETTING STARTED
 
-    CONTACTS - Access your contact list
+    Install the app from F-Droid or Google Play
 
-🔄 NAVIGATION TIPS
-Context Management:
-bash
+    Grant permissions when prompted for each feature
 
-cli> call john
-📞 Calling John...
-call> mute              # In-call commands
-call> exit              # Return to main CLI
+    Enable Shizuku for advanced system control (optional)
 
-cli> sms john
-💬 Conversation with John...
-sms> reply "Hello"      # Reply to message
-sms> exit               # Back to message list
-sms> exit               # Back to main CLI
+    Start typing commands - the CLI will guide you
 
-Dynamic Suggestions:
+    Use help anytime for command reference
 
-    Type partial commands for auto-suggestions
+🔧 TROUBLESHOOTING
+Common Issues
 
-    Use Tab-completion where available
+    Permission denied: Type command again to grant permissions
 
-    Context-aware help in each module
+    Feature not available: Enable Shizuku for system controls
 
-🐛 TROUBLESHOOTING
-Common Issues:
-bash
+    Authentication failed: Use biometric or PIN authentication
 
-# Command not found
-❌ Command not found: [command]
-💡 Type 'help' for available commands
+    Command not found: Check spelling or use help
 
-# Permission denied  
-❌ Permission required for [feature]
-💡 Grant the requested permission in Android Settings
+Enhanced Capabilities
 
-# Feature not available
-❌ Feature requires [app/service]
-💡 Install the required application
+    Install Termux from F-Droid for full Linux environment
 
-Connectivity Notes:
+    Enable Shizuku for root-level system control
 
-    Some connectivity commands show status only
+    Use Google Play Services for enhanced location/maps
 
-    Actual toggling may require system permissions
-
-    Uses Android intents for system integration
-
-📖 ADVANCED USAGE
-Batch Operations:
-bash
-
-# Chain commands with semicolons
-sms john "Meeting at 3"; call sarah; map office
-
-# Use in scripts for automation
-
-Customization:
-
-    Theme colors in settings
-
-    Command aliases support
-
-    Notification preferences
-
-🤝 CONTRIBUTING
-
-SmartCLI is open source! Contribute at:
-[GitHub Repository URL]
-📄 LICENSE
-
-GPL-3.0 - Free and open source software
-
-Enjoy controlling your smartphone the Linux way! 🐧📱
-
+SmartCLI Phone - Your smartphone, reimagined for the command line. 🚀📱

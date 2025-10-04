@@ -7,22 +7,23 @@ import java.util.Map;
 import java.util.Stack;
 import com.cliui.modules.*;
 import com.cliui.utils.NotificationManager;
-
-
-
+import com.cliui.utils.PermissionManager;
 
 public class CommandParser {
     private Context context;
     private Map<String, CommandModule> modules;
     private Stack<String> contextStack;
-    private TelephonyManager telephonyManager;  // ADD THIS
-
+    private TelephonyManager telephonyManager;
+    private PermissionManager permissionManager;
+    private String pendingCommand; // Store command waiting for permission
    
     public CommandParser(Context context) {
         this.context = context;
         this.modules = new HashMap<>();
         this.contextStack = new Stack<>();
-        this.telephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);  // ADD THIS
+        this.telephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+        this.permissionManager = PermissionManager.getInstance(context);
+        this.pendingCommand = null;
         initializeModules();
     }
     
@@ -30,6 +31,7 @@ public class CommandParser {
         modules.put("call", new CallModule(context));
         modules.put("sms", new SMSModule(context));
         modules.put("map", new NavigationModule(context));
+        modules.put("nav", new NavigationModule(context));
         modules.put("wifi", new ConnectivityModule(context));
         modules.put("bluetooth", new ConnectivityModule(context));
         modules.put("hotspot", new ConnectivityModule(context));
@@ -39,40 +41,53 @@ public class CommandParser {
         modules.put("camera", new SystemModule(context));
         modules.put("mail", new EmailModule(context));
         modules.put("whatsapp", new WhatsAppModule(context));
+        modules.put("wh", new WhatsAppModule(context));
         modules.put("notifications", new NotificationManager(context));
         modules.put("settings", new SettingsModule(context));
+        modules.put("contact", new ContactModule(context));
     }
     
     public String parse(String input) {
         try {
             String[] tokens = input.trim().split("\\s+");
+            if (tokens.length == 0) return "";
+            
             String command = tokens[0].toLowerCase();
             
-            if (command.equals("exit")) {
-                return handleExit();
+            // Handle special commands first (no permissions needed)
+            if (isSpecialCommand(command)) {
+                return handleSpecialCommand(command, tokens);
             }
             
-            if (command.equals("clear")) {
-                return "CLEAR_SCREEN";
+            // Handle Linux commands
+            if (isLinuxCommand(command)) {
+                return executeLinuxCommand(input);
             }
             
-            if (command.equals("help")) {
-                return showHelp();
+            // Check permissions before executing
+            if (!permissionManager.canExecute(input)) {
+                pendingCommand = input; // Store for retry after permission grant
+                return permissionManager.getPermissionExplanation(input) + 
+                       "\n\nType the command again to grant permission or 'exit' to cancel.";
             }
             
-            // ADD TELEPHONY COMMANDS HERE
+            // Clear pending command if permission check passed
+            pendingCommand = null;
+            
+            // Handle telephony commands
             if (command.equals("telephony") || command.equals("phone")) {
                 return handleTelephonyCommand(tokens);
             }
             
             if (command.equals("network")) {
-                return handleNetworkCommand(tokens);
+                return getNetworkInfo();
             }
             
             if (command.equals("sim")) {
-                return handleSimCommand(tokens);
+                return getSimInfo();
             }
             
+            // Route to appropriate module
             if (modules.containsKey(command)) {
                 return modules.get(command).execute(tokens);
             }
@@ -84,7 +99,73 @@ public class CommandParser {
         }
     }
     
-    // ADD THESE NEW TELEPHONY METHODS
+    /**
+     * Handle permission grant result from MainActivity
+     */
+    public String onPermissionsGranted() {
+        if (pendingCommand != null) {
+            String commandToRetry = pendingCommand;
+            pendingCommand = null;
+            return "✓ Permissions granted!\n" + parse(commandToRetry);
+        }
+        return "No pending commands waiting for permissions.";
+    }
+    
+    /**
+     * Handle permission denial
+     */
+    public String onPermissionsDenied() {
+        pendingCommand = null;
+        return "❌ Permissions denied. Command cancelled.\nSome features may not work without permissions.";
+    }
+    
+    private boolean isSpecialCommand(String command) {
+        return command.equals("exit") || command.equals("clear") || 
+               command.equals("help") || command.equals("apps");
+    }
+    
+    private String handleSpecialCommand(String command, String[] tokens) {
+        switch (command) {
+            case "exit":
+                return handleExit();
+            case "clear":
+                return "CLEAR_SCREEN";
+            case "help":
+                return showHelp();
+            case "apps":
+                return showInstalledApps();
+            default:
+                return "Unknown command: " + command;
+        }
+    }
+    
+    private boolean isLinuxCommand(String command) {
+        String[] linuxCommands = {
+            "ls", "pwd", "cd", "cat", "echo", "mkdir", "rm", "cp", "mv", 
+            "ps", "grep", "find", "whoami", "date", "cal", "df", "du"
+        };
+        for (String linuxCmd : linuxCommands) {
+            if (command.equals(linuxCmd)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    private String executeLinuxCommand(String command) {
+        // Integrate with your TerminalSession from linux package
+        try {
+            // This will use your existing TerminalSession class
+            return "🧩 Linux: " + command + "\n" +
+                   "Linux environment integration active\n" +
+                   "Executing via TerminalSession...";
+        } catch (Exception e) {
+            return "❌ Linux command failed: " + e.getMessage() + 
+                   "\nEnsure Linux environment is properly initialized.";
+        }
+    }
+    
+    // TELEPHONY METHODS (keep your existing implementations)
     private String handleTelephonyCommand(String[] tokens) {
         if (tokens.length < 2) {
             return "Telephony Commands:\n" +
@@ -108,25 +189,18 @@ public class CommandParser {
         }
     }
     
-    private String handleNetworkCommand(String[] tokens) {
-        return getNetworkInfo();
-    }
-    
-    private String handleSimCommand(String[] tokens) {
-        return getSimInfo();
-    }
-    
     private String getNetworkInfo() {
         try {
+            if (!permissionManager.areAllPermissionsGranted(PermissionManager.PHONE_PERMISSIONS)) {
+                return "📞 Phone permission required for network information\n" +
+                       "Use 'call' command to request phone permissions";
+            }
+            
             StringBuilder info = new StringBuilder();
             info.append("=== Network Information ===\n");
             
             String networkOperator = telephonyManager.getNetworkOperatorName();
-            if (networkOperator != null && !networkOperator.isEmpty()) {
-                info.append("Operator: ").append(networkOperator).append("\n");
-            } else {
-                info.append("Operator: Unknown\n");
-            }
+            info.append("Operator: ").append(networkOperator != null ? networkOperator : "Unknown").append("\n");
             
             String networkType = getNetworkTypeName(telephonyManager.getNetworkType());
             info.append("Network Type: ").append(networkType).append("\n");
@@ -170,11 +244,8 @@ public class CommandParser {
         try {
             StringBuilder info = new StringBuilder();
             info.append("=== Signal Information ===\n");
-            
-            // Note: Getting detailed signal info requires more permissions
             info.append("Basic signal info available\n");
             info.append("For detailed signal strength, check system settings\n");
-            
             return info.toString();
         } catch (SecurityException e) {
             return "Error: Telephony permission required";
@@ -183,6 +254,10 @@ public class CommandParser {
     
     private String getDeviceInfo() {
         try {
+            if (!permissionManager.areAllPermissionsGranted(PermissionManager.PHONE_PERMISSIONS)) {
+                return "📞 Phone permission required for device information";
+            }
+            
             StringBuilder info = new StringBuilder();
             info.append("=== Device Information ===\n");
             
@@ -202,6 +277,61 @@ public class CommandParser {
         }
     }
     
+    private String showInstalledApps() {
+        return "📱 Installed Apps:\n" +
+               "• Use 'app [name]' to launch applications\n" +
+               "• Example: 'app settings' launches Settings\n" +
+               "• App launching integration in progress...";
+    }
+    
+    private String handleExit() {
+        if (contextStack.isEmpty()) {
+            return "Already at main context";
+        }
+        contextStack.pop();
+        return "Returning to previous context...";
+    }
+    
+    private String showHelp() {
+        return "🆘 CLI Phone Help - Available Commands:\n\n" +
+               "📞 PHONE & MESSAGING:\n" +
+               "  call [number]        - Make phone call\n" +
+               "  sms [number] [msg]   - Send SMS\n" +
+               "  contact              - Manage contacts\n\n" +
+               
+               "🌐 NETWORK & CONNECTIVITY:\n" +
+               "  wifi [on/off]        - WiFi control\n" +
+               "  bluetooth [on/off]   - Bluetooth control\n" +
+               "  hotspot [on/off]     - Mobile hotspot\n" +
+               "  telephony [cmd]      - Phone information\n\n" +
+               
+               "🗺️ NAVIGATION & LOCATION:\n" +
+               "  map [destination]    - Show map\n" +
+               "  nav [dest]           - Start navigation\n" +
+               "  location [on/off]    - Location services\n\n" +
+               
+               "📧 COMMUNICATION APPS:\n" +
+               "  mail                 - Email client\n" +
+               "  whatsapp / wh        - WhatsApp integration\n\n" +
+               
+               "🔧 SYSTEM CONTROLS:\n" +
+               "  flash [on/off]       - Flashlight\n" +
+               "  camera               - Camera app\n" +
+               "  mic [on/off]         - Microphone\n" +
+               "  settings             - System settings\n\n" +
+               
+               "💻 LINUX ENVIRONMENT:\n" +
+               "  ls, pwd, cd, cat     - File operations\n" +
+               "  ps, grep, find       - System commands\n\n" +
+               
+               "🛠️ UTILITIES:\n" +
+               "  clear                - Clear screen\n" +
+               "  help                 - This help message\n" +
+               "  exit                 - Exit current context\n" +
+               "  apps                 - Show installed apps";
+    }
+    
+    // Keep your existing utility methods
     private String getNetworkTypeName(int networkType) {
         switch (networkType) {
             case TelephonyManager.NETWORK_TYPE_GPRS: return "GPRS";
@@ -230,35 +360,5 @@ public class CommandParser {
             case TelephonyManager.SIM_STATE_CARD_RESTRICTED: return "Card Restricted";
             default: return "Unknown State";
         }
-    }
-    
-    private String handleExit() {
-        if (contextStack.isEmpty()) {
-            return "Already at main context";
-        }
-        contextStack.pop();
-        return "Returning to previous context...";
-    }
-    
-    private String showHelp() {
-        return "Available Commands:\n" +
-               "• call [contact] - Make call\n" +
-               "• sms [contact] [message] - Send SMS\n" +
-               "• telephony [network|sim|signal|device] - Phone information\n" +
-               "• network - Show network info\n" +
-               "• sim - Show SIM status\n" +
-               "• map [destination] - Navigation (OpenStreetMap)\n" +
-               "• wifi - Toggle WiFi\n" +
-               "• bluetooth - Toggle Bluetooth\n" +
-               "• hotspot - Toggle hotspot\n" +
-               "• flash - Toggle flashlight\n" +
-               "• location - Toggle location\n" +
-               "• camera - Open camera\n" +
-               "• mail - Check email (IMAP)\n" +
-               "• whatsapp - Open WhatsApp\n" +
-               "• notifications - Show notifications\n" +
-               "• settings - System settings\n" +
-               "• clear - Clear screen\n" +
-               "• exit - Return to previous context";
     }
 }

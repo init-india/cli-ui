@@ -1,49 +1,94 @@
-package com.cliui.modules;
-
-import android.content.Context;
-import android.net.wifi.WifiManager;
-
 public class ConnectivityModule implements CommandModule {
     private Context context;
-    private boolean wifiEnabled = false;
-    private boolean bluetoothEnabled = false;
-    private boolean hotspotEnabled = false;
+    private PermissionManager permissionManager;
+    private ConnectivityState currentState = ConnectivityState.IDLE;
+    private List<WifiNetwork> availableNetworks = new ArrayList<>();
+    private List<BluetoothDevice> availableDevices = new ArrayList<>();
+    private String selectedNetworkId = null;
     
-    public ConnectivityModule(Context context) {
-        this.context = context;
-    }
-    
-    @Override
     public String execute(String[] tokens) {
-        String command = tokens[0];
+        if (!permissionManager.canExecute(tokens[0])) {
+            return "🔧 System control requires permissions\nType command again to grant";
+        }
+        
+        String command = tokens[0].toLowerCase();
         
         switch (command) {
             case "wifi":
-                wifiEnabled = !wifiEnabled;
-                if (wifiEnabled) {
-                    return "✅ WiFi turned ON\nAvailable networks:\n1. Home_WiFi (Strong)\n2. Starbucks_Free (Good)\n[Note: Actual toggle requires system permissions]";
-                } else {
-                    return "📶 WiFi turned OFF\n[Note: Actual toggle requires system permissions]";
-                }
-                
+                return handleWifiCommand(tokens);
             case "bluetooth":
-                bluetoothEnabled = !bluetoothEnabled;
-                if (bluetoothEnabled) {
-                    return "🔵 Bluetooth turned ON\nPaired devices:\n1. AirPods Pro\n2. Car Audio\n[Note: Actual toggle requires system permissions]";
-                } else {
-                    return "🔵 Bluetooth turned OFF\n[Note: Actual toggle requires system permissions]";
-                }
-                
+                return handleBluetoothCommand(tokens);
             case "hotspot":
-                hotspotEnabled = !hotspotEnabled;
-                if (hotspotEnabled) {
-                    return "📶 Hotspot activated: SmartCLI_8943\n[Note: Actual toggle requires system permissions]";
-                } else {
-                    return "📶 Hotspot deactivated\n[Note: Actual toggle requires system permissions]";
-                }
-                
+                return handleHotspotCommand(tokens);
             default:
                 return "Unknown connectivity command";
         }
     }
+    
+    private String handleWifiCommand(String[] tokens) {
+        if (tokens.length == 1) {
+            // Show WiFi status
+            boolean isWifiEnabled = isWifiEnabled();
+            String status = isWifiEnabled ? "ON" : "OFF";
+            return "📶 WiFi: " + status + "\n" + 
+                   (isWifiEnabled ? "💡 Type 'wifi' again to see networks or 'wifi off' to disable" : "💡 Type 'wifi' again to enable");
+        }
+        
+        if (tokens.length == 2) {
+            String action = tokens[1].toLowerCase();
+            if (action.equals("off")) {
+                return disableWifi();
+            } else {
+                // Assume it's a network selection
+                return connectToWifiNetwork(action);
+            }
+        }
+        
+        return toggleWifi();
+    }
+    
+    private String toggleWifi() {
+        boolean currentState = isWifiEnabled();
+        
+        if (ShizukuManager.executeCommand(currentState ? "svc wifi disable" : "svc wifi enable")) {
+            return "✅ WiFi " + (currentState ? "disabled" : "enabled");
+        }
+        return "❌ Failed to toggle WiFi";
+    }
+    
+    private String disableWifi() {
+        if (ShizukuManager.executeCommand("svc wifi disable")) {
+            return "✅ WiFi disabled";
+        }
+        return "❌ Failed to disable WiFi";
+    }
+    
+    private boolean isWifiEnabled() {
+        // Use Shizuku to check WiFi status
+        String result = ShizukuManager.executeCommandWithOutput("settings get global wifi_on");
+        return "1".equals(result.trim());
+    }
+    
+    private String scanWifiNetworks() {
+        // Use Shizuku to scan for networks
+        String scanResult = ShizukuManager.executeCommandWithOutput("cmd wifi list-networks");
+        // Parse scan result and populate availableNetworks
+        availableNetworks = parseWifiNetworks(scanResult);
+        
+        StringBuilder sb = new StringBuilder();
+        sb.append("📶 Available Networks:\n");
+        for (int i = 0; i < Math.min(availableNetworks.size(), 10); i++) {
+            WifiNetwork network = availableNetworks.get(i);
+            sb.append(i + 1).append(". ").append(network.ssid)
+              .append(" - ").append(network.signalStrength)
+              .append(network.connected ? " (Connected)" : "")
+              .append("\n");
+        }
+        sb.append("\n💡 Type number to connect or 'exit' to cancel");
+        
+        currentState = ConnectivityState.WIFI_SELECTION;
+        return sb.toString();
+    }
+    
+    // Similar implementations for Bluetooth and Hotspot...
 }

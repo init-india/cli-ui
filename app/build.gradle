@@ -47,6 +47,20 @@ dependencies {
     implementation 'androidx.core:core-ktx:1.10.1'
     implementation 'androidx.biometric:biometric:1.1.0'
 
+    implementation 'com.google.android.gms:play-services-location:21.0.1'
+    implementation 'com.google.android.gms:play-services-maps:18.1.0'
+    implementation 'androidx.work:work-runtime:2.8.1'
+
+    // For Linux terminal functionality
+    implementation 'com.termux:termux-shared:0.118.0'
+    
+    // For email functionality
+    implementation 'com.sun.mail:android-mail:1.6.7'
+    implementation 'com.sun.mail:android-activation:1.6.7'
+}
+
+
+
     // F-Droid version - NO Google dependencies
     // Uses platform TelephonyManager (built into Android)
     fdroidImplementation 'androidx.appcompat:appcompat:1.6.1'  // Re-declare if needed
