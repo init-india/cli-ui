@@ -9,6 +9,8 @@ import android.speech.tts.TextToSpeech;
 import android.os.Handler;
 import android.os.Looper;
 import com.cliui.utils.PermissionManager;
+import com.cliui.utils.ShizukuManager;
+import com.cliui.utils.Authentication;
 import org.json.JSONObject;
 import org.json.JSONArray;
 import java.io.BufferedReader;
@@ -61,10 +63,17 @@ public class NavigationModule implements CommandModule {
         if (tokens.length == 0) return getUsage();
         
         String command = tokens[0].toLowerCase();
-        
-        // Check location permissions
-        if (!permissionManager.canExecute("map") && !command.equals("exit")) {
-            return "📍 Location permission required\nType 'map' again to grant permission";
+        String fullCommand = String.join(" ", tokens).toLowerCase();
+
+        // Check permissions using PermissionManager
+        if (!permissionManager.canExecute(fullCommand)) {
+            return permissionManager.getPermissionExplanation(fullCommand);
+        }
+
+        // Require authentication for navigation access
+        if (!Authentication.authenticate("navigation_access")) {
+            return "🔒 Authentication required for navigation\n" +
+                   "Please authenticate to use navigation features";
         }
         
         // Handle exit command in any state
@@ -84,6 +93,8 @@ public class NavigationModule implements CommandModule {
                 return handleRouteDisplayState(tokens);
             case NAVIGATING:
                 return handleNavigationState(tokens);
+            case LOCATION_SETTINGS:
+                return handleLocationSettings(tokens);
             default:
                 return handleIdleState(tokens);
         }
@@ -92,7 +103,7 @@ public class NavigationModule implements CommandModule {
     private String handleIdleState(String[] tokens) {
         String command = tokens[0].toLowerCase();
         
-        if (command.equals("map")) {
+        if (command.equals("map") || command.equals("nav")) {
             if (tokens.length == 1) {
                 return showRecentSearches();
             } else {
@@ -102,14 +113,53 @@ public class NavigationModule implements CommandModule {
             }
         }
         
+        if (command.equals("location")) {
+            return handleLocationCommand(tokens);
+        }
+        
         if (command.equals("nav") && currentRoute != null) {
             return startNavigation();
         }
         
-        return "Unknown command. Type 'map' for navigation.";
+        return "❌ Unknown command. Type 'map' for navigation or 'location' for location settings.";
+    }
+    
+    private String handleLocationCommand(String[] tokens) {
+        if (tokens.length == 1) {
+            return getLocationStatus();
+        }
+        
+        String subCommand = tokens[1].toLowerCase();
+        switch (subCommand) {
+            case "on":
+                return enableLocation();
+            case "off":
+                return disableLocation();
+            case "status":
+                return getLocationStatus();
+            case "gps":
+                return getGPSStatus();
+            case "high":
+                return setLocationAccuracy(true);
+            case "battery":
+                return setLocationAccuracy(false);
+            default:
+                return "❌ Unknown location command. Use: location [on|off|status|gps|high|battery]";
+        }
     }
     
     private String processMapInput(String input) {
+        // Check if location services are enabled
+        if (!isLocationEnabled()) {
+            currentState = NavigationState.LOCATION_SETTINGS;
+            return "📍 Location services disabled\n" +
+                   "Enable location for navigation:\n" +
+                   "• location on (enable)\n" +
+                   "• location high (high accuracy)\n" +
+                   "• location battery (battery saving)\n" +
+                   "• exit (cancel)";
+        }
+        
         if (input.contains(";")) {
             // Source and destination provided
             String[] parts = input.split(";");
@@ -127,7 +177,7 @@ public class NavigationModule implements CommandModule {
             return getDestinationSuggestions();
         }
         
-        return "Invalid format. Use: map destination OR map source;destination";
+        return "❌ Invalid format. Use: map destination OR map source;destination";
     }
     
     private String handleSuggestionState(String[] tokens, boolean destinationOnly) {
@@ -165,6 +215,7 @@ public class NavigationModule implements CommandModule {
         
         switch (command) {
             case "nav":
+            case "start":
                 return startNavigation();
             case "alt":
                 if (tokens.length > 1) {
@@ -176,6 +227,10 @@ public class NavigationModule implements CommandModule {
                     }
                 }
                 return showAlternativeRoutes();
+            case "details":
+                return showRouteDetails();
+            case "share":
+                return shareRoute();
             default:
                 return displayCurrentRoute() + "\n\n" + getRouteSuggestions();
         }
@@ -187,9 +242,11 @@ public class NavigationModule implements CommandModule {
         switch (command) {
             case "mute":
                 voiceEnabled = false;
+                speak("Voice guidance muted");
                 return "🔇 Voice guidance muted";
             case "unmute":
                 voiceEnabled = true;
+                speak("Voice guidance enabled");
                 return "🔊 Voice guidance enabled";
             case "pause":
                 navigationPaused = true;
@@ -200,9 +257,55 @@ public class NavigationModule implements CommandModule {
                 return "▶️ Navigation resumed";
             case "status":
                 return getNavigationStatus();
+            case "next":
+                return getNextStep();
+            case "reroute":
+                return recalculateRoute();
             default:
                 return getNavigationSuggestions();
         }
+    }
+    
+    private String handleLocationSettings(String[] tokens) {
+        String command = tokens[0].toLowerCase();
+        
+        if (command.equals("location")) {
+            if (tokens.length > 1) {
+                String subCommand = tokens[1].toLowerCase();
+                switch (subCommand) {
+                    case "on":
+                        String result = enableLocation();
+                        if (result.contains("✅")) {
+                            currentState = NavigationState.IDLE;
+                        }
+                        return result;
+                    case "high":
+                        result = setLocationAccuracy(true);
+                        if (result.contains("✅")) {
+                            currentState = NavigationState.IDLE;
+                        }
+                        return result;
+                    case "battery":
+                        result = setLocationAccuracy(false);
+                        if (result.contains("✅")) {
+                            currentState = NavigationState.IDLE;
+                        }
+                        return result;
+                }
+            }
+        }
+        
+        if (command.equals("exit")) {
+            currentState = NavigationState.IDLE;
+            return "✅ Returned to navigation menu";
+        }
+        
+        return "📍 Location Settings\n" +
+               "Enable location for navigation:\n" +
+               "• location on (enable)\n" +
+               "• location high (high accuracy)\n" +
+               "• location battery (battery saving)\n" +
+               "• exit (cancel)";
     }
     
     private String handleExit() {
@@ -213,18 +316,20 @@ public class NavigationModule implements CommandModule {
             case ROUTE_DISPLAY:
             case SUGGESTING_DESTINATION:
             case SUGGESTING_SOURCE_DESTINATION:
+            case LOCATION_SETTINGS:
                 currentState = NavigationState.IDLE;
                 currentSuggestions.clear();
-                return "Returning to main menu";
+                return "✅ Returning to main menu";
             default:
                 return "Already in main menu";
         }
     }
     
-    // Core Navigation Methods
+    // ===== Core Navigation Methods =====
+    
     private String showRecentSearches() {
         if (recentSearches.isEmpty()) {
-            return "🗺️ No recent searches\n\nType: map [destination] to search";
+            return "🗺️ No recent searches\n\n💡 Type: map [destination] to search";
         }
         
         StringBuilder sb = new StringBuilder();
@@ -285,7 +390,8 @@ public class NavigationModule implements CommandModule {
             return displayCurrentRoute();
             
         } catch (Exception e) {
-            return "❌ Route calculation failed: " + e.getMessage();
+            return "❌ Route calculation failed: " + e.getMessage() + 
+                   "\n💡 Check internet connection and try again";
         }
     }
     
@@ -298,9 +404,10 @@ public class NavigationModule implements CommandModule {
         sb.append("⏱️ ETA: ").append(currentRoute.duration).append("\n");
         sb.append("💰 Toll: ").append(currentRoute.hasToll ? "Yes" : "No").append("\n");
         sb.append("🚦 Traffic: ").append(currentRoute.trafficLevel).append("\n");
+        sb.append("📍 Location: ").append(getLocationStatus());
         
         if (!currentRoute.alternativeRoutes.isEmpty()) {
-            sb.append("\n🔄 Alternative routes available");
+            sb.append("\n🔄 ").append(currentRoute.alternativeRoutes.size()).append(" alternative routes available");
         }
         
         sb.append("\n").append(getRouteSuggestions());
@@ -309,6 +416,11 @@ public class NavigationModule implements CommandModule {
     
     private String startNavigation() {
         if (currentRoute == null) return "❌ No route to navigate";
+        
+        if (!isLocationEnabled()) {
+            return "❌ Location services disabled\n" +
+                   "Enable location with: location on";
+        }
         
         currentState = NavigationState.NAVIGATING;
         currentStep = 0;
@@ -322,7 +434,8 @@ public class NavigationModule implements CommandModule {
         
         return "🚗 Navigation started!\n" +
                "📍 " + currentRoute.destination + "\n" +
-               "📏 " + currentRoute.distance + " • ⏱️ " + currentRoute.duration + "\n\n" +
+               "📏 " + currentRoute.distance + " • ⏱️ " + currentRoute.duration + "\n" +
+               "🔊 Voice: " + (voiceEnabled ? "ON" : "OFF") + "\n\n" +
                getNavigationSuggestions();
     }
     
@@ -332,13 +445,109 @@ public class NavigationModule implements CommandModule {
         
         if (navigationScheduler != null) {
             navigationScheduler.shutdown();
+            navigationScheduler = null;
         }
         
-        textToSpeech.stop();
+        if (textToSpeech != null) {
+            textToSpeech.stop();
+        }
         speak("Navigation ended");
     }
     
-    // Navigation Updates
+    // ===== Location Management =====
+    
+    private String enableLocation() {
+        if (ShizukuManager.isAvailable()) {
+            if (ShizukuManager.executeCommand("settings put secure location_providers_allowed +gps")) {
+                return "✅ Location enabled via Shizuku\n" +
+                       "🔧 GPS: Enabled | Mode: High Accuracy";
+            }
+        }
+        
+        // Fallback to system location settings
+        Intent intent = new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        context.startActivity(intent);
+        
+        return "📍 Open location settings to enable\n" +
+               "💡 Enable GPS and location services";
+    }
+    
+    private String disableLocation() {
+        if (ShizukuManager.isAvailable()) {
+            if (ShizukuManager.executeCommand("settings put secure location_providers_allowed -gps")) {
+                return "✅ Location disabled via Shizuku";
+            }
+        }
+        
+        return "❌ Shizuku required to disable location\n" +
+               "💡 Use system settings to disable location";
+    }
+    
+    private String setLocationAccuracy(boolean highAccuracy) {
+        if (ShizukuManager.isAvailable()) {
+            String mode = highAccuracy ? "high_accuracy" : "battery_saving";
+            if (ShizukuManager.executeCommand("settings put secure location_mode " + 
+                (highAccuracy ? "3" : "2"))) {
+                return "✅ Location mode set to " + (highAccuracy ? "High Accuracy" : "Battery Saving") + " via Shizuku";
+            }
+        }
+        
+        return "❌ Shizuku required for location mode control\n" +
+               "💡 Use system settings to change location accuracy";
+    }
+    
+    private String getLocationStatus() {
+        boolean enabled = isLocationEnabled();
+        String gpsStatus = getGPSStatus();
+        
+        return "📍 Location: " + (enabled ? "✅ Enabled" : "❌ Disabled") + "\n" +
+               gpsStatus + "\n" +
+               "🔧 Shizuku: " + (ShizukuManager.isAvailable() ? "Available ✅" : "Not Available ❌");
+    }
+    
+    private String getGPSStatus() {
+        if (ShizukuManager.isAvailable()) {
+            String result = ShizukuManager.executeCommandWithOutput("settings get secure location_providers_allowed");
+            if (result.contains("gps")) {
+                return "🛰️ GPS: ✅ Enabled";
+            }
+        }
+        
+        // Fallback check
+        if (locationManager != null) {
+            try {
+                boolean gpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+                return "🛰️ GPS: " + (gpsEnabled ? "✅ Enabled" : "❌ Disabled");
+            } catch (SecurityException e) {
+                return "🛰️ GPS: ❓ Unknown (Permission needed)";
+            }
+        }
+        
+        return "🛰️ GPS: ❓ Status unknown";
+    }
+    
+    private boolean isLocationEnabled() {
+        if (ShizukuManager.isAvailable()) {
+            String result = ShizukuManager.executeCommandWithOutput("settings get secure location_providers_allowed");
+            return result != null && result.contains("gps");
+        }
+        
+        // Fallback check
+        if (locationManager != null) {
+            try {
+                return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
+                       locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+            } catch (SecurityException e) {
+                return false;
+            }
+        }
+        
+        return false;
+    }
+    
+    // ===== Navigation Updates =====
+    
     private void startNavigationUpdates() {
         navigationScheduler = Executors.newSingleThreadScheduledExecutor();
         navigationScheduler.scheduleAtFixedRate(() -> {
@@ -375,7 +584,8 @@ public class NavigationModule implements CommandModule {
         }
     }
     
-    // External Service Integration
+    // ===== External Service Integration =====
+    
     private List<LocationSuggestion> getLocationSuggestions(String query) {
         // Implement with Nominatim (OpenStreetMap) or other geocoding service
         List<LocationSuggestion> suggestions = new ArrayList<>();
@@ -434,11 +644,13 @@ public class NavigationModule implements CommandModule {
         return newRoute;
     }
     
-    // Utility Methods
+    // ===== Utility Methods =====
+    
     private void initializeTextToSpeech() {
         textToSpeech = new TextToSpeech(context, status -> {
             if (status != TextToSpeech.SUCCESS) {
                 // TTS initialization failed, navigation will continue without voice
+                voiceEnabled = false;
             }
         });
     }
@@ -455,10 +667,8 @@ public class NavigationModule implements CommandModule {
     }
     
     private void setupLocationUpdates() {
+        locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
         // Setup location updates using Shizuku if available
-        if (permissionManager.canExecute("location")) {
-            // Start location tracking
-        }
     }
     
     private String getCurrentLocationName() {
@@ -494,46 +704,112 @@ public class NavigationModule implements CommandModule {
         }
     }
     
-    private String getRouteSuggestions() {
-        return "💡 Type: nav (start navigation) | alt (alternate routes) | exit (cancel)";
+    private String getNextStep() {
+        if (currentStep < currentRoute.steps.size()) {
+            RouteStep step = currentRoute.steps.get(currentStep);
+            return "➡️ Next: " + step.instruction + " (" + step.distance + ")";
+        }
+        return "🎉 You have reached your destination!";
     }
     
-    private String getNavigationSuggestions() {
-        return "💡 Type: mute/unmute (voice) | pause/resume | status | exit (stop)";
-    }
-    
-    private String getNavigationStatus() {
-        if (currentRoute == null) return "❌ No active navigation";
+    private String recalculateRoute() {
+        if (currentRoute == null) return "❌ No active route to recalculate";
         
-        int progress = (int) ((double) currentStep / currentRoute.steps.size() * 100);
-        return "🚗 Navigation Status:\n" +
-               "📍 " + currentRoute.destination + "\n" +
-               "📊 Progress: " + progress + "%\n" +
-               "🎯 " + currentStep + "/" + currentRoute.steps.size() + " steps\n" +
-               "🔊 Voice: " + (voiceEnabled ? "ON" : "OFF");
+        try {
+            String routeData = fetchRouteFromOSRM(currentRoute.source, currentRoute.destination);
+            Route newRoute = parseRouteData(routeData);
+            currentRoute = newRoute;
+            currentStep = 0;
+            
+            return "🔄 Route recalculated\n" + displayCurrentRoute();
+        } catch (Exception e) {
+            return "❌ Failed to recalculate route: " + e.getMessage();
+        }
+    }
+    
+    private String showRouteDetails() {
+        if (currentRoute == null) return "❌ No route to show details";
+        
+        StringBuilder sb = new StringBuilder();
+        sb.append("🗺️ Route Details:\n");
+        sb.append("Steps: ").append(currentRoute.steps.size()).append("\n\n");
+        
+        for (int i = 0; i < Math.min(currentRoute.steps.size(), 10); i++) {
+            RouteStep step = currentRoute.steps.get(i);
+            sb.append(i + 1).append(". ").append(step.instruction).append(" (").append(step.distance).append(")\n");
+        }
+        
+        if (currentRoute.steps.size() > 10) {
+            sb.append("\n... and ").append(currentRoute.steps.size() - 10).append(" more steps");
+        }
+        
+        return sb.toString();
+    }
+    
+    private String shareRoute() {
+        if (currentRoute == null) return "❌ No route to share";
+        
+        String shareText = "Route: " + currentRoute.source + " to " + currentRoute.destination + 
+                          " - " + currentRoute.distance + " - " + currentRoute.duration;
+        
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.setType("text/plain");
+        shareIntent.putExtra(Intent.EXTRA_TEXT, shareText);
+        context.startActivity(Intent.createChooser(shareIntent, "Share Route"));
+        
+        return "✅ Route shared";
     }
     
     private String showAlternativeRoutes() {
-        return "🔄 Alternative Routes:\n1. Fastest (5min longer, no toll)\n2. Scenic (15min longer)\n3. Shortest (more traffic)\n\nType: alt [number] to select";
+        return "🔄 Alternative Routes:\n1. Fastest (5min longer, no toll)\n2. Scenic (15min longer)\n3. Shortest (more traffic)\n\n💡 Type: alt [number] to select";
     }
     
     private String showAlternativeRoute(int routeNumber) {
         return "✅ Alternative route " + routeNumber + " selected\n" + getRouteSuggestions();
     }
     
-    private String getUsage() {
-        return "🗺️ Navigation Commands:\n" +
-               "• map - Show recent searches\n" +
-               "• map [destination] - Search location\n" +
-               "• map [source];[destination] - Route with source\n" +
-               "• nav - Start navigation\n" +
-               "• exit - Cancel/stop navigation\n" +
-               "• mute/unmute - Toggle voice guidance";
+    private String getRouteSuggestions() {
+        return "💡 Commands: nav (start) | alt (alternates) | details (steps) | share | exit";
     }
     
-    // Data Classes
+    private String getNavigationSuggestions() {
+        return "💡 Commands: mute/unmute (voice) | pause/resume | status | next | reroute | exit";
+    }
+    
+    private String getNavigationStatus() {
+        if (currentRoute == null) return "❌ No active navigation";
+        
+        int progress = currentRoute.steps.size() > 0 ? 
+            (int) ((double) currentStep / currentRoute.steps.size() * 100) : 0;
+            
+        return "🚗 Navigation Status:\n" +
+               "📍 " + currentRoute.destination + "\n" +
+               "📊 Progress: " + progress + "%\n" +
+               "🎯 Step: " + currentStep + "/" + currentRoute.steps.size() + "\n" +
+               "🔊 Voice: " + (voiceEnabled ? "ON" : "OFF") + "\n" +
+               "⏸️ Paused: " + (navigationPaused ? "Yes" : "No");
+    }
+    
+    private String getUsage() {
+        return "🗺️ Navigation Module Usage:\n" +
+               "• map/nav              - Show recent searches\n" +
+               "• map [destination]    - Search location\n" +
+               "• map [src];[dest]     - Route with source\n" +
+               "• location             - Location status\n" +
+               "• location on/off      - Enable/disable location\n" +
+               "• location high/battery- Accuracy mode\n" +
+               "• nav/start            - Start navigation\n" +
+               "• exit                 - Cancel/stop\n" +
+               "\n📍 Requires: Location permissions + Authentication" +
+               "\n🔧 Shizuku: " + (ShizukuManager.isAvailable() ? "Available ✅" : "Not Available ❌") +
+               "\n🔊 TTS: " + (textToSpeech != null ? "Available ✅" : "Not Available ❌");
+    }
+    
+    // ===== Data Classes =====
+    
     enum NavigationState {
-        IDLE, SUGGESTING_DESTINATION, SUGGESTING_SOURCE_DESTINATION, ROUTE_DISPLAY, NAVIGATING
+        IDLE, SUGGESTING_DESTINATION, SUGGESTING_SOURCE_DESTINATION, 
+        ROUTE_DISPLAY, NAVIGATING, LOCATION_SETTINGS
     }
     
     class LocationSearch {

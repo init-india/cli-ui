@@ -2,6 +2,8 @@ package com.cliui.modules;
 
 import android.content.Context;
 import com.cliui.utils.PermissionManager;
+import com.cliui.utils.ShizukuManager;
+import com.cliui.utils.Authentication;
 import com.cliui.linux.TerminalSession;
 import com.cliui.linux.PackageManager;
 import java.util.*;
@@ -25,6 +27,18 @@ public class LinuxModule implements CommandModule {
         if (tokens.length == 0) return getUsage();
         
         String command = tokens[0].toLowerCase();
+        String fullCommand = String.join(" ", tokens).toLowerCase();
+
+        // Check basic permissions for Linux module access
+        if (!permissionManager.canExecute(fullCommand)) {
+            return permissionManager.getPermissionExplanation(fullCommand);
+        }
+
+        // Require authentication for system-level operations
+        if (requiresAuthentication(command) && !Authentication.authenticate("linux_access")) {
+            return "🔒 Authentication required for Linux operations\n" +
+                   "Please authenticate to use system commands";
+        }
         
         // Handle shell mode
         if (inShellMode && !command.equals("exit")) {
@@ -37,7 +51,8 @@ public class LinuxModule implements CommandModule {
                 return showLinuxInfo();
             case "shell":
                 inShellMode = true;
-                return "💻 Shell Mode Activated\nType Linux commands directly\nType 'exit' to return to main CLI";
+                return "💻 Shell Mode Activated\nType Linux commands directly\nType 'exit' to return to main CLI\n\n" +
+                       "🔧 Shizuku: " + (ShizukuManager.isAvailable() ? "Available ✅" : "Not Available ❌");
             case "pkg":
             case "package":
                 return handlePackageCommand(tokens);
@@ -56,6 +71,13 @@ public class LinuxModule implements CommandModule {
     
     private String executeLinuxCommand(String[] tokens) {
         String fullCommand = String.join(" ", tokens);
+        
+        // Warn about Shizuku requirements for system commands
+        if (requiresShizuku(fullCommand) && !ShizukuManager.isAvailable()) {
+            return "❌ Shizuku required for: " + fullCommand + "\n" +
+                   "This command needs system-level access via Shizuku";
+        }
+        
         return terminalSession.executeCommand(fullCommand);
     }
     
@@ -68,11 +90,17 @@ public class LinuxModule implements CommandModule {
                    "• pkg remove <package> - Remove package\n" +
                    "• pkg enable <package> - Enable package\n" +
                    "• pkg disable <package> - Disable package\n\n" +
-                   "💡 Shizuku required for package operations";
+                   "🔧 Shizuku: " + (ShizukuManager.isAvailable() ? "Available ✅" : "Required ❌");
         }
         
         String action = tokens[1].toLowerCase();
         String packageName = tokens.length > 2 ? tokens[2] : "";
+        
+        // Check if package operation requires Shizuku
+        if (requiresShizukuForPackage(action) && !ShizukuManager.isAvailable()) {
+            return "❌ Shizuku not available\n" +
+                   "Package " + action + " requires system-level access via Shizuku";
+        }
         
         switch (action) {
             case "list":
@@ -106,7 +134,8 @@ public class LinuxModule implements CommandModule {
             sb.append("\n... and ").append(packages.size() - 20).append(" more packages");
         }
         
-        sb.append("\n\n💡 Use 'pkg info <package>' for details");
+        sb.append("\n\n🔧 Shizuku: ").append(ShizukuManager.isAvailable() ? "Available ✅" : "Not Available ❌");
+        sb.append("\n💡 Use 'pkg info <package>' for details");
         return sb.toString();
     }
     
@@ -117,12 +146,12 @@ public class LinuxModule implements CommandModule {
                "• System Info: ps, whoami, date, uname\n" +
                "• Package Management: pkg list/info/install/remove\n" +
                "• Shell Mode: shell (interactive command line)\n\n" +
-               "💡 Enable Shizuku for real file system access\n" +
+               "🔧 Shizuku: " + (ShizukuManager.isAvailable() ? "Available ✅" : "Required for system operations ❌") + "\n" +
                "💡 Install Termux from F-Droid for full Linux environment";
     }
     
     private String showFileOperations() {
-        return "📁 File Operations (with Shizuku):\n\n" +
+        return "📁 File Operations:\n\n" +
                "• ls [path] - List directory contents\n" +
                "• cat <file> - Display file content\n" +
                "• pwd - Show current directory\n" +
@@ -131,6 +160,7 @@ public class LinuxModule implements CommandModule {
                "• ps - Show running processes\n" +
                "• whoami - Show current user\n" +
                "• date - Show current date/time\n\n" +
+               "🔧 Shizuku: " + (ShizukuManager.isAvailable() ? "Available ✅" : "Required for system paths ❌") + "\n" +
                "💡 Example: ls /sdcard/Download";
     }
     
@@ -138,7 +168,28 @@ public class LinuxModule implements CommandModule {
         return executeLinuxCommand(new String[]{"uname"}) + "\n" +
                executeLinuxCommand(new String[]{"whoami"}) + "\n" +
                executeLinuxCommand(new String[]{"date"}) + "\n" +
-               executeLinuxCommand(new String[]{"df"});
+               executeLinuxCommand(new String[]{"df"}) +
+               "\n\n🔧 Shizuku: " + (ShizukuManager.isAvailable() ? "Available ✅" : "Limited functionality ❌");
+    }
+    
+    // ===== Permission & Shizuku Detection =====
+    
+    private boolean requiresAuthentication(String command) {
+        return !command.equals("linux") && !command.equals("files");
+    }
+    
+    private boolean requiresShizuku(String command) {
+        String lowerCommand = command.toLowerCase();
+        // Commands that need system access
+        return lowerCommand.startsWith("pm ") || 
+               lowerCommand.startsWith("settings ") ||
+               lowerCommand.startsWith("cmd ") ||
+               lowerCommand.contains("/system/") ||
+               lowerCommand.contains("/data/");
+    }
+    
+    private boolean requiresShizukuForPackage(String action) {
+        return !action.equals("list") && !action.equals("info");
     }
     
     private String getUsage() {
@@ -150,6 +201,8 @@ public class LinuxModule implements CommandModule {
                "• files - Available file operations\n" +
                "• sysinfo - System information\n" +
                "• exit - Exit shell mode\n\n" +
+               "🔒 Requires: Authentication for system commands\n" +
+               "🔧 Shizuku: " + (ShizukuManager.isAvailable() ? "Available ✅" : "Required for system operations ❌") + "\n" +
                "💡 Type any Linux command directly";
     }
 }

@@ -5,24 +5,20 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
-import android.provider.Settings;
-import androidx.annotation.NonNull;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import java.util.ArrayList;
-import java.util.List;
 import android.os.Bundle;
+import android.provider.Settings;
+import android.telephony.TelephonyManager;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.ScrollView;
 import android.widget.TextView;
-import androidx.appcompat.app.AppCompatActivity;
-import android.telephony.TelephonyManager;
-import android.content.Context;
 import android.widget.Toast;
-import rikka.shizuku.Shizuku;
-import rikka.shizuku.Shizuku.OnRequestPermissionResultListener;
+import android.content.Context;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 public class MainActivity extends AppCompatActivity {
     
@@ -35,6 +31,7 @@ public class MainActivity extends AppCompatActivity {
     // Permission request codes
     private static final int PERMISSION_REQUEST_CODE = 1001;
     private static final int OVERLAY_PERMISSION_CODE = 1002;
+    private static final int SHIZUKU_PERMISSION_CODE = 1003;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,6 +45,75 @@ public class MainActivity extends AppCompatActivity {
         
         // Check for overlay permission (for potential future features)
         checkOverlayPermission();
+        
+        // Initialize Shizuku if available
+        initializeShizuku();
+    }
+    
+    private void initializeShizuku() {
+        try {
+            // Use reflection to check if Shizuku classes are available
+            Class<?> shizukuClass = Class.forName("rikka.shizuku.Shizuku");
+            java.lang.reflect.Method pingBinderMethod = shizukuClass.getMethod("pingBinder");
+            Boolean isAvailable = (Boolean) pingBinderMethod.invoke(null);
+            
+            if (isAvailable) {
+                appendToTerminal("Shizuku: Available", "#00FF00");
+                // Request Shizuku permission
+                java.lang.reflect.Method requestPermissionMethod = shizukuClass.getMethod("requestPermission", int.class);
+                requestPermissionMethod.invoke(null, SHIZUKU_PERMISSION_CODE);
+                
+                // Set up permission listener
+                setupShizukuListener();
+            } else {
+                appendToTerminal("Shizuku: Not available", "#FFFF00");
+            }
+        } catch (Exception e) {
+            appendToTerminal("Shizuku: Not available - " + e.getMessage(), "#FF0000");
+        }
+    }
+    
+    private void setupShizukuListener() {
+        try {
+            Class<?> shizukuClass = Class.forName("rikka.shizuku.Shizuku");
+            Class<?> listenerClass = Class.forName("rikka.shizuku.Shizuku$OnRequestPermissionResultListener");
+            
+            java.lang.reflect.Method addListenerMethod = shizukuClass.getMethod(
+                "addRequestPermissionResultListener", 
+                listenerClass
+            );
+            
+            Object listener = java.lang.reflect.Proxy.newProxyInstance(
+                listenerClass.getClassLoader(),
+                new Class<?>[]{listenerClass},
+                (proxy, method, args) -> {
+                    if (method.getName().equals("onRequestPermissionResult")) {
+                        int requestCode = (Integer) args[0];
+                        int grantResult = (Integer) args[1];
+                        
+                        if (requestCode == SHIZUKU_PERMISSION_CODE) {
+                            if (grantResult == PackageManager.PERMISSION_GRANTED) {
+                                runOnUiThread(() -> {
+                                    Toast.makeText(MainActivity.this, "Shizuku permission granted!", Toast.LENGTH_SHORT).show();
+                                    appendToTerminal("Shizuku: Permission granted", "#00FF00");
+                                });
+                            } else {
+                                runOnUiThread(() -> {
+                                    Toast.makeText(MainActivity.this, "Shizuku permission denied!", Toast.LENGTH_SHORT).show();
+                                    appendToTerminal("Shizuku: Permission denied", "#FF0000");
+                                });
+                            }
+                        }
+                    }
+                    return null;
+                }
+            );
+            
+            addListenerMethod.invoke(null, listener);
+            
+        } catch (Exception e) {
+            appendToTerminal("Shizuku listener setup failed: " + e.getMessage(), "#FF0000");
+        }
     }
     
     private void initializeTelephony() {
@@ -234,6 +300,8 @@ public class MainActivity extends AppCompatActivity {
                     appendToTerminal("Overlay permission denied", "#FF0000");
                 }
             }
+        } else if (requestCode == SHIZUKU_PERMISSION_CODE) {
+            // Handle Shizuku permission result if needed
         }
     }
     
@@ -259,32 +327,5 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         // You can add status refresh here if needed
-    }
-@Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
-        // Check if Shizuku permission is already granted
-        if (!Shizuku.pingBinder()) {
-            // Request permission
-            Shizuku.requestPermission(0); // 0 is the request code
-        } else {
-            Toast.makeText(this, "Shizuku permission already granted!", Toast.LENGTH_SHORT).show();
-        }
-
-        // Optional: listen to permission result
-        Shizuku.addRequestPermissionResultListener(new OnRequestPermissionResultListener() {
-            @Override
-            public void onRequestPermissionResult(int requestCode, boolean granted) {
-                if (requestCode == 0) {
-                    if (granted) {
-                        Toast.makeText(MainActivity.this, "Shizuku permission granted!", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Toast.makeText(MainActivity.this, "Shizuku permission denied!", Toast.LENGTH_SHORT).show();
-                    }
-                }
-            }
-        });
     }
 }
