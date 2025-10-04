@@ -1,14 +1,28 @@
+package com.cliui.modules;
+
+import android.content.Context;
+import com.cliui.utils.PermissionManager;
+
 public class SystemModule implements CommandModule {
+
     private Context context;
     private PermissionManager permissionManager;
-    
+
+    public SystemModule(Context context) {
+        this.context = context;
+        this.permissionManager = PermissionManager.getInstance(context);
+    }
+
+    @Override
     public String execute(String[] tokens) {
-        if (!permissionManager.canExecute(tokens[0])) {
-            return "🔧 System control requires permissions\nType command again to grant";
-        }
-        
+        if (tokens.length == 0) return "❌ No command provided";
+
         String command = tokens[0].toLowerCase();
-        
+
+        if (!permissionManager.canExecute(command)) {
+            return permissionManager.getPermissionExplanation(command);
+        }
+
         switch (command) {
             case "flash":
                 return toggleFlashlight();
@@ -25,38 +39,54 @@ public class SystemModule implements CommandModule {
             case "date":
                 return showDate();
             default:
-                return "Unknown system command";
+                return "❌ Unknown system command";
         }
     }
-    
+
+    // ===== Flashlight =====
     private String toggleFlashlight() {
-        // Use Shizuku to control flashlight
-        boolean currentState = isFlashlightEnabled();
-        
-        if (ShizukuManager.executeCommand(currentState ? "cmd flashlight disable" : "cmd flashlight enable")) {
-            return "🔦 Flashlight " + (currentState ? "OFF" : "ON");
-        }
-        return "❌ Failed to toggle flashlight";
+        boolean enabled = isFlashlightEnabled();
+        boolean success = ShizukuManager.isAvailable() &&
+                          ShizukuManager.executeCommand(enabled ? "cmd flashlight disable" : "cmd flashlight enable");
+        return success ? "🔦 Flashlight " + (enabled ? "OFF" : "ON")
+                       : "❌ Failed to toggle flashlight";
     }
-    
+
+    private boolean isFlashlightEnabled() {
+        // Placeholder: return false as default
+        return false;
+    }
+
+    // ===== Location =====
     private String toggleLocation() {
-        boolean currentState = isLocationEnabled();
-        
-        if (ShizukuManager.executeCommand(
-            currentState ? 
-            "settings put secure location_providers_allowed -gps" :
-            "settings put secure location_providers_allowed +gps"
-        )) {
-            return "📍 Location " + (currentState ? "OFF" : "ON");
-        }
-        return "❌ Failed to toggle location";
+        boolean enabled = isLocationEnabled();
+        boolean success = ShizukuManager.isAvailable() &&
+                          ShizukuManager.executeCommand(
+                              enabled ? "settings put secure location_providers_allowed -gps" :
+                                        "settings put secure location_providers_allowed +gps"
+                          );
+        return success ? "📍 Location " + (enabled ? "OFF" : "ON")
+                       : "❌ Failed to toggle location";
     }
-    
+
+    private boolean isLocationEnabled() {
+        // Placeholder: return false as default
+        return false;
+    }
+
+    // ===== Microphone =====
     private String toggleMicrophone() {
-        // This would require more complex audio routing control
-        return "🎤 Microphone control requires advanced audio permissions";
+        // Advanced audio routing requires more setup
+        return "🎤 Microphone control requires advanced permissions";
     }
-    
+
+    // ===== Camera =====
+    private String toggleCamera() {
+        // Placeholder: actual implementation depends on camera API
+        return "📷 Camera control requires user interaction or advanced permissions";
+    }
+
+    // ===== Alarm =====
     private String handleAlarmCommand(String[] tokens) {
         if (tokens.length == 1) {
             return showAlarms();
@@ -65,23 +95,34 @@ public class SystemModule implements CommandModule {
         }
         return "Usage: alarm | alarm set HH:MM [message]";
     }
-    
+
     private String showAlarms() {
-        // Use Shizuku to list alarms
-        String alarms = ShizukuManager.executeCommandWithOutput("dumpsys alarm");
-        // Parse alarms and display
-        return "⏰ Active Alarms:\n[Alarm list from system]\n\n💡 Type 'alarm set HH:MM' to set new alarm";
+        if (ShizukuManager.isAvailable()) {
+            String alarms = ShizukuManager.executeCommandWithOutput("dumpsys alarm");
+            return "⏰ Active Alarms:\n" + alarms + "\n💡 Type 'alarm set HH:MM' to set new alarm";
+        }
+        return "🔧 Cannot fetch alarms, Shizuku not available";
     }
-    
+
+    private String setAlarm(String[] tokens) {
+        // Placeholder: actual alarm setting would require parsing and sending intent
+        return "⏰ Setting alarm is not implemented yet";
+    }
+
+    // ===== Time & Date =====
     private String showTime() {
-        // Use Linux date command via Shizuku
-        String time = ShizukuManager.executeCommandWithOutput("date '+%H:%M:%S'");
-        return "🕒 Current Time: " + time.trim();
+        if (ShizukuManager.isAvailable()) {
+            String time = ShizukuManager.executeCommandWithOutput("date '+%H:%M:%S'");
+            return "🕒 Current Time: " + time.trim();
+        }
+        return "🔧 Cannot get time, Shizuku not available";
     }
-    
+
     private String showDate() {
-        // Use Linux date command via Shizuku
-        String date = ShizukuManager.executeCommandWithOutput("date '+%d-%b-%Y'");
-        return "📅 Current Date: " + date.trim();
+        if (ShizukuManager.isAvailable()) {
+            String date = ShizukuManager.executeCommandWithOutput("date '+%d-%b-%Y'");
+            return "📅 Current Date: " + date.trim();
+        }
+        return "🔧 Cannot get date, Shizuku not available";
     }
 }
