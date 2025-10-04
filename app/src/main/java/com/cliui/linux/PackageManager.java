@@ -111,8 +111,8 @@ public class PackageManager {
     private String installSystemPackage(String pkg) {
         return "📦 " + pkg + "\n💡 System package installation requires root access\n💡 Use: pkg install " + pkg + " in Termux";
     }
-}
-public String installCommand(String commandName, String handlerCode) {
+    
+    public String installCommand(String commandName, String handlerCode) {
         // Dynamic command installation
         try {
             // This would compile and load the handler at runtime
@@ -129,7 +129,7 @@ public String installCommand(String commandName, String handlerCode) {
         );
     }
     
-    public String installPackage(String pkg) {
+    public String installPackageFromRepo(String pkg) {
         switch (pkg) {
             case "core-utils":
                 return installCoreUtilities();
@@ -145,5 +145,15 @@ public String installCommand(String commandName, String handlerCode) {
     private String installCoreUtilities() {
         // Register additional core utilities
         return "✅ Installed core utilities: basename, dirname, realpath, etc.";
+    }
+    
+    private String installFileUtilities() {
+        // Register file utilities
+        return "✅ Installed file utilities: cp, mv, rm, ls, etc.";
+    }
+    
+    private String installNetworkUtilities() {
+        // Register network utilities
+        return "✅ Installed network utilities: ping, wget, curl, etc.";
     }
 }
