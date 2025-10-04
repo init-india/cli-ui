@@ -1,3 +1,12 @@
+package com.cliui.modules;
+
+import android.content.Context;
+import android.bluetooth.BluetoothDevice;
+import java.util.List;
+import java.util.ArrayList;
+import com.cliui.utils.PermissionManager;
+
+
 public class ConnectivityModule implements CommandModule {
     private Context context;
     private PermissionManager permissionManager;

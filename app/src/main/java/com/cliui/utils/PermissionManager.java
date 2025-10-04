@@ -14,6 +14,13 @@ import android.net.wifi.WifiManager;
 import android.location.LocationManager;
 import android.provider.Settings;
 import android.hardware.camera2.CameraManager;
+import android.content.Context;
+import android.bluetooth.BluetoothDevice;
+import java.util.List;
+import java.util.ArrayList;
+
+
+
 
 public class PermissionManager {
     private static PermissionManager instance;

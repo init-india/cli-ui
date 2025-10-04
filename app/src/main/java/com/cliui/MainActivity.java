@@ -19,6 +19,10 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import android.telephony.TelephonyManager;
 import android.content.Context;
+import android.widget.Toast;
+import rikka.shizuku.Shizuku;
+import rikka.shizuku.Shizuku.OnRequestPermissionResultListener;
+
 
 public class MainActivity extends AppCompatActivity {
     
@@ -255,5 +259,32 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         // You can add status refresh here if needed
+    }
+@Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        // Check if Shizuku permission is already granted
+        if (!Shizuku.pingBinder()) {
+            // Request permission
+            Shizuku.requestPermission(0); // 0 is the request code
+        } else {
+            Toast.makeText(this, "Shizuku permission already granted!", Toast.LENGTH_SHORT).show();
+        }
+
+        // Optional: listen to permission result
+        Shizuku.addRequestPermissionResultListener(new OnRequestPermissionResultListener() {
+            @Override
+            public void onRequestPermissionResult(int requestCode, boolean granted) {
+                if (requestCode == 0) {
+                    if (granted) {
+                        Toast.makeText(MainActivity.this, "Shizuku permission granted!", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(MainActivity.this, "Shizuku permission denied!", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+        });
     }
 }

@@ -8,7 +8,7 @@ import com.cliui.utils.PermissionManager;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-public class GmailModule implements CommandModule {
+public class EmailModule implements CommandModule {
     private Context context;
     private PermissionManager permissionManager;
     
@@ -24,7 +24,7 @@ public class GmailModule implements CommandModule {
     // Constants
     private static final int MESSAGES_PER_PAGE = 20;
     
-    public GmailModule(Context context) {
+    public EmailModule(Context context) {
         this.context = context;
         this.permissionManager = PermissionManager.getInstance(context);
         loadSampleMessages(); // For demo - replace with real Gmail API
