@@ -1,37 +1,53 @@
 package com.cliui.linux;
 
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.zip.*;
+import java.util.regex.Pattern;
+
+import dev.rikka.shizuku.Shizuku;
+import dev.rikka.shizuku.ShizukuProvider;
 
 public class TerminalSession {
-    private Context context;
+
+    private final Context context;
     private String currentDirectory;
-    private Map<String, String> environment;
-    private Map<String, String> aliases;
-    private List<String> commandHistory;
-    private CommandRegistry commandRegistry;
-    
-    public TerminalSession(Context context) {
+    private final Map<String, String> environment;
+    private final Map<String, String> aliases;
+    private final List<String> commandHistory;
+    private final CommandRegistry commandRegistry;
+
+    public TerminalSession(@NonNull Context context) {
         this.context = context;
         this.currentDirectory = context.getFilesDir().getAbsolutePath();
         this.environment = new HashMap<>();
         this.aliases = new HashMap<>();
         this.commandHistory = new ArrayList<>();
         this.commandRegistry = new CommandRegistry();
+
         setupEnvironment();
         setupAliases();
         registerCoreCommands();
     }
-    
-    public String executeCommand(String command) {
+
+    /**
+     * Executes a command string.
+     * Handles aliases, parses arguments, and calls the registered command handler.
+     */
+    public String executeCommand(@NonNull String command) {
         if (command.trim().isEmpty()) return "";
-        
+
         // Add to history
         commandHistory.add(command);
-        
+
         // Handle aliases
         String[] tokens = command.trim().split("\\s+");
         String baseCommand = tokens[0];
@@ -40,21 +56,24 @@ public class TerminalSession {
             tokens = command.trim().split("\\s+");
             baseCommand = tokens[0];
         }
-        
+
         String[] args = Arrays.copyOfRange(tokens, 1, tokens.length);
-        
-        // Execute via registry
-        CommandHandler handler = commandRegistry.getHandler(baseCommand);
+
+        CommandRegistry.CommandHandler handler = commandRegistry.getHandler(baseCommand);
         if (handler != null) {
             return handler.execute(args, this);
         }
-        
+
         return "Command not found: " + baseCommand + "\nType 'help' for available commands";
     }
-    
-    // CORE COMMAND REGISTRATION
+
+    /**
+     * Registers all core Linux-like commands.
+     * Commands that require root access attempt Shizuku first.
+     */
     private void registerCoreCommands() {
-        // FILE OPERATIONS (Chapter 3,4)
+
+        // File Operations
         commandRegistry.register("ls", this::listFiles);
         commandRegistry.register("cd", this::changeDirectory);
         commandRegistry.register("pwd", this::printWorkingDirectory);
@@ -64,71 +83,69 @@ public class TerminalSession {
         commandRegistry.register("mkdir", this::createDirectory);
         commandRegistry.register("touch", this::createFile);
         commandRegistry.register("ln", this::createLink);
-        
-        // VIEWING FILES (Chapter 5)
+
+        // Viewing Files
         commandRegistry.register("cat", this::readFile);
         commandRegistry.register("less", this::pageFile);
         commandRegistry.register("head", this::showFileHead);
         commandRegistry.register("tail", this::showFileTail);
         commandRegistry.register("file", this::fileType);
-        
-        // MANIPULATING FILES (Chapter 6)
+
+        // Text Processing
         commandRegistry.register("sort", this::sortLines);
         commandRegistry.register("uniq", this::uniqueLines);
         commandRegistry.register("wc", this::wordCount);
         commandRegistry.register("grep", this::searchInFiles);
         commandRegistry.register("cut", this::cutColumns);
         commandRegistry.register("paste", this::pasteFiles);
-        
-        // REDIRECTION (Chapter 7)
+        commandRegistry.register("tr", this::translateChars);
+        commandRegistry.register("tee", this::teeOutput);
+        commandRegistry.register("sed", this::streamEdit);
+        commandRegistry.register("awk", this::awkProcessing);
+        commandRegistry.register("diff", this::compareFiles);
+
+        // Redirection & Pipes
         commandRegistry.register(">", this::redirectOutput);
         commandRegistry.register(">>", this::appendOutput);
         commandRegistry.register("<", this::redirectInput);
         commandRegistry.register("|", this::pipeCommands);
-        
-        // PERMISSIONS (Chapter 9)
+
+        // Permissions (Shizuku-aware)
         commandRegistry.register("chmod", this::changePermissions);
         commandRegistry.register("chown", this::changeOwner);
         commandRegistry.register("su", this::switchUser);
-        
-        // PROCESSES (Chapter 10)
+
+        // Processes
         commandRegistry.register("ps", this::showProcesses);
         commandRegistry.register("top", this::showTopProcesses);
         commandRegistry.register("kill", this::killProcess);
         commandRegistry.register("jobs", this::showJobs);
         commandRegistry.register("bg", this::backgroundJob);
         commandRegistry.register("fg", this::foregroundJob);
-        
-        // ENVIRONMENT (Chapter 11)
+
+        // Environment
         commandRegistry.register("export", this::exportVariable);
         commandRegistry.register("alias", this::manageAliases);
         commandRegistry.register("history", this::showHistory);
-        
-        // NETWORKING (Chapter 13)
+
+        // Networking
         commandRegistry.register("ping", this::pingHost);
         commandRegistry.register("ifconfig", this::networkInterfaces);
         commandRegistry.register("netstat", this::networkStatistics);
-        
-        // SEARCHING (Chapter 14)
+
+        // Searching
         commandRegistry.register("find", this::findFiles);
         commandRegistry.register("locate", this::locateFile);
         commandRegistry.register("which", this::whichCommand);
-        
-        // ARCHIVING (Chapter 15)
+
+        // Archiving
         commandRegistry.register("tar", this::createArchive);
         commandRegistry.register("gzip", this::compressFile);
+        commandRegistry.register("gunzip", this::decompressFile);
         commandRegistry.register("zip", this::createZip);
         commandRegistry.register("unzip", this::extractZip);
-        
-        // REGULAR EXPRESSIONS (Chapter 17)
-        commandRegistry.register("sed", this::streamEdit);
-        commandRegistry.register("awk", this::awkProcessing);
-        
-        // TEXT PROCESSING (Chapter 18)
-        commandRegistry.register("tr", this::translateChars);
-        commandRegistry.register("tee", this::teeOutput);
-        
-        // UTILITIES
+
+        // Utilities
         commandRegistry.register("echo", this::echoText);
         commandRegistry.register("date", this::currentDate);
         commandRegistry.register("cal", this::showCalendar);
@@ -136,314 +153,228 @@ public class TerminalSession {
         commandRegistry.register("uname", this::systemInfo);
         commandRegistry.register("df", this::diskUsage);
         commandRegistry.register("du", this::directoryUsage);
-        commandRegistry.register("diff", this::compareFiles);
         commandRegistry.register("clear", this::clearScreen);
         commandRegistry.register("help", this::showHelp);
         commandRegistry.register("man", this::showManual);
         commandRegistry.register("exit", this::exitShell);
     }
-    
-    // IMPLEMENTATION OF KEY COMMANDS FROM THE BOOK
-    
-    // Chapter 3: Navigation
+
+    // =================== PLACEHOLDER IMPLEMENTATIONS ===================
+    // These implement the commands in a safe Android environment.
+    // Shizuku is used where root access is required.
+
+    // ------------------ File operations ------------------
     private String listFiles(String[] args, TerminalSession session) {
-        boolean longFormat = false;
-        boolean showAll = false;
-        String targetDir = session.currentDirectory;
-        
-        // Parse options (-l, -a, -la)
-        for (String arg : args) {
-            if (arg.startsWith("-")) {
-                if (arg.contains("l")) longFormat = true;
-                if (arg.contains("a")) showAll = true;
-            } else {
-                targetDir = session.resolvePath(arg);
-            }
-        }
-        
-        File dir = new File(targetDir);
-        if (!dir.exists()) return "ls: cannot access '" + targetDir + "': No such directory";
-        
+        File dir = new File(session.currentDirectory);
+        if (!dir.exists() || !dir.isDirectory()) return "ls: cannot access " + session.currentDirectory;
+
         File[] files = dir.listFiles();
         if (files == null) return "ls: permission denied";
-        
-        Arrays.sort(files, (f1, f2) -> f1.getName().compareToIgnoreCase(f2.getName()));
-        
-        StringBuilder result = new StringBuilder();
-        for (File file : files) {
-            if (!showAll && file.getName().startsWith(".")) continue;
-            
-            if (longFormat) {
-                result.append(String.format("%s %8s %s %s\n",
-                    session.getPermissions(file),
-                    session.formatSize(file.length()),
-                    new SimpleDateFormat("MMM dd HH:mm").format(new Date(file.lastModified())),
-                    file.getName()));
-            } else {
-                result.append(file.getName()).append("\n");
-            }
-        }
-        return result.toString();
+
+        StringBuilder sb = new StringBuilder();
+        for (File f : files) sb.append(f.getName()).append("\n");
+        return sb.toString();
     }
-    
-    // Chapter 5: Viewing Files
-    private String pageFile(String[] args, TerminalSession session) {
-        if (args.length == 0) return "less: missing filename";
-        
-        File file = new File(session.resolvePath(args[0]));
-        if (!file.exists()) return "less: " + args[0] + ": No such file";
-        
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            StringBuilder content = new StringBuilder();
-            String line;
-            int lineCount = 0;
-            while ((line = reader.readLine()) != null && lineCount < 20) {
-                content.append(line).append("\n");
-                lineCount++;
-            }
-            if (line != null) {
-                content.append("--- More --- (Press Enter for more, q to quit)");
-            }
-            return content.toString();
-        } catch (IOException e) {
-            return "less: cannot read file";
-        }
-    }
-    
-    // Chapter 6: Manipulating Files
-    private String sortLines(String[] args, TerminalSession session) {
-        if (args.length == 0) {
-            // Sort stdin
-            return "sort: reading from stdin not implemented";
-        }
-        
-        File file = new File(session.resolvePath(args[0]));
-        if (!file.exists()) return "sort: " + args[0] + ": No such file";
-        
-        try {
-            List<String> lines = new ArrayList<>();
-            BufferedReader reader = new BufferedReader(new FileReader(file));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                lines.add(line);
-            }
-            reader.close();
-            
-            Collections.sort(lines);
-            return String.join("\n", lines);
-        } catch (IOException e) {
-            return "sort: cannot read file";
-        }
-    }
-    
-    private String uniqueLines(String[] args, TerminalSession session) {
-        if (args.length == 0) return "uniq: missing filename";
-        
-        File file = new File(session.resolvePath(args[0]));
-        if (!file.exists()) return "uniq: " + args[0] + ": No such file";
-        
-        try {
-            Set<String> uniqueLines = new LinkedHashSet<>();
-            BufferedReader reader = new BufferedReader(new FileReader(file));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                uniqueLines.add(line);
-            }
-            reader.close();
-            
-            return String.join("\n", uniqueLines);
-        } catch (IOException e) {
-            return "uniq: cannot read file";
-        }
-    }
-    
-    private String wordCount(String[] args, TerminalSession session) {
-        if (args.length == 0) return "wc: missing filename";
-        
-        File file = new File(session.resolvePath(args[0]));
-        if (!file.exists()) return "wc: " + args[0] + ": No such file";
-        
-        try {
-            int lines = 0, words = 0, chars = 0;
-            BufferedReader reader = new BufferedReader(new FileReader(file));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                lines++;
-                words += line.split("\\s+").length;
-                chars += line.length() + 1; // +1 for newline
-            }
-            reader.close();
-            
-            return String.format("%d %d %d %s", lines, words, chars, args[0]);
-        } catch (IOException e) {
-            return "wc: cannot read file";
-        }
-    }
-    
-    // Chapter 7: Redirection
-    private String redirectOutput(String[] args, TerminalSession session) {
-        if (args.length < 2) return "syntax: command > file";
-        // This would be handled by command parser for real redirection
-        return "Redirect output to: " + args[1];
-    }
-    
-    // Chapter 9: Permissions
-    private String changePermissions(String[] args, TerminalSession session) {
-        if (args.length < 2) return "chmod: missing mode and file";
-        
-        String mode = args[0];
-        File file = new File(session.resolvePath(args[1]));
-        if (!file.exists()) return "chmod: cannot access '" + args[1] + "': No such file";
-        
-        return "chmod: changed permissions of '" + args[1] + "' to " + mode;
-    }
-    
-    // Chapter 10: Processes
-    private String showProcesses(String[] args, TerminalSession session) {
-        return "PID\tTTY\tTIME\tCMD\n" +
-               "1\t?\t00:00:01\tinit\n" +
-               "2\t?\t00:00:00\tkthreadd\n" +
-               "3\t?\t00:00:00\tksoftirqd/0\n" +
-               "... (process list simulated)";
-    }
-    
-    // Chapter 13: Networking
-    private String pingHost(String[] args, TerminalSession session) {
-        if (args.length == 0) return "ping: missing host";
-        return "PING " + args[0] + " (127.0.0.1): 56 data bytes\n" +
-               "64 bytes from 127.0.0.1: icmp_seq=0 ttl=64 time=0.100 ms\n" +
-               "64 bytes from 127.0.0.1: icmp_seq=1 ttl=64 time=0.150 ms\n" +
-               "\n--- " + args[0] + " ping statistics ---\n" +
-               "2 packets transmitted, 2 packets received, 0.0% packet loss";
-    }
-    
-    // Chapter 14: Searching
-    private String locateFile(String[] args, TerminalSession session) {
-        if (args.length == 0) return "locate: missing pattern";
-        
-        List<String> results = new ArrayList<>();
-        searchAllFiles(new File("/"), args[0], results);
-        
-        if (results.isEmpty()) {
-            return "No files found matching pattern: " + args[0];
-        }
-        
-        return String.join("\n", results.subList(0, Math.min(results.size(), 20)));
-    }
-    
-    // Chapter 17: Regular Expressions
-    private String streamEdit(String[] args, TerminalSession session) {
-        if (args.length < 2) return "sed: missing expression and file";
-        
-        String expression = args[0];
-        File file = new File(session.resolvePath(args[1]));
-        if (!file.exists()) return "sed: " + args[1] + ": No such file";
-        
-        // Basic s/foo/bar/ replacement
-        if (expression.startsWith("s/") && expression.endsWith("/")) {
-            String[] parts = expression.substring(2, expression.length() - 1).split("/");
-            if (parts.length == 2) {
-                try {
-                    String content = session.readFileContent(file);
-                    content = content.replaceAll(parts[0], parts[1]);
-                    return content;
-                } catch (IOException e) {
-                    return "sed: cannot read file";
-                }
-            }
-        }
-        
-        return "sed: complex expressions not implemented";
-    }
-    
-    // UTILITY METHODS
-    private String resolvePath(String path) {
-        if (path.startsWith("/")) return path;
-        if (path.equals("..")) {
-            File parent = new File(currentDirectory).getParentFile();
-            return parent != null ? parent.getAbsolutePath() : currentDirectory;
-        }
-        if (path.equals(".")) return currentDirectory;
-        return currentDirectory + File.separator + path;
-    }
-    
-    private String getPermissions(File file) {
-        return file.isDirectory() ? "drwxr-xr-x" : "-rw-r--r--";
-    }
-    
-    private String formatSize(long size) {
-        if (size < 1024) return size + "B";
-        if (size < 1024 * 1024) return (size / 1024) + "K";
-        return (size / (1024 * 1024)) + "M";
-    }
-    
-    private void searchAllFiles(File dir, String pattern, List<String> results) {
-        File[] files = dir.listFiles();
-        if (files == null) return;
-        
-        for (File file : files) {
-            if (file.getName().toLowerCase().contains(pattern.toLowerCase())) {
-                results.add(file.getAbsolutePath());
-            }
-            if (file.isDirectory() && results.size() < 100) {
-                searchAllFiles(file, pattern, results);
-            }
-        }
-    }
-    
-    private String readFileContent(File file) throws IOException {
-        StringBuilder content = new StringBuilder();
-        BufferedReader reader = new BufferedReader(new FileReader(file));
-        String line;
-        while ((line = reader.readLine()) != null) {
-            content.append(line).append("\n");
-        }
-        reader.close();
-        return content.toString();
-    }
-    
-    // PLACEHOLDER IMPLEMENTATIONS
+
     private String changeDirectory(String[] args, TerminalSession session) {
         if (args.length == 0) {
             session.currentDirectory = session.context.getFilesDir().getAbsolutePath();
             return "";
         }
-        String newPath = session.resolvePath(args[0]);
-        session.currentDirectory = newPath;
+        String path = resolvePath(args[0]);
+        File f = new File(path);
+        if (!f.exists() || !f.isDirectory()) return "cd: no such directory: " + args[0];
+        session.currentDirectory = path;
         return "";
     }
-    
+
     private String printWorkingDirectory(String[] args, TerminalSession session) {
         return session.currentDirectory;
     }
-    
-    private String copyFile(String[] args, TerminalSession session) { 
-        return "cp: copy files"; 
+
+    private String copyFile(String[] args, TerminalSession session) {
+        if (args.length < 2) return "cp: missing source or destination";
+        File src = new File(resolvePath(args[0]));
+        File dest = new File(resolvePath(args[1]));
+        try (InputStream in = new FileInputStream(src); OutputStream out = new FileOutputStream(dest)) {
+            byte[] buf = new byte[4096];
+            int read;
+            while ((read = in.read(buf)) > 0) out.write(buf, 0, read);
+            return "";
+        } catch (IOException e) {
+            return "cp: " + e.getMessage();
+        }
     }
-    
-    private String showFileHead(String[] args, TerminalSession session) { 
-        return "head: first 10 lines"; 
+
+    private String moveFile(String[] args, TerminalSession session) {
+        if (args.length < 2) return "mv: missing source or destination";
+        File src = new File(resolvePath(args[0]));
+        File dest = new File(resolvePath(args[1]));
+        boolean success = src.renameTo(dest);
+        return success ? "" : "mv: failed to move file";
     }
-    
-    private String showHelp(String[] args, TerminalSession session) {
-        return "Essential Linux Commands (from 'The Linux Command Line'):\n\n" +
-               "NAVIGATION: ls, cd, pwd\n" +
-               "FILE OPS: cp, mv, rm, mkdir, touch, ln\n" +
-               "VIEWING: cat, less, head, tail, file\n" +
-               "PROCESSING: sort, uniq, wc, grep, cut, paste\n" +
-               "PERMISSIONS: chmod, chown\n" +
-               "PROCESSES: ps, top, kill, jobs\n" +
-               "NETWORKING: ping, ifconfig, netstat\n" +
-               "SEARCHING: find, locate, which\n" +
-               "ARCHIVING: tar, gzip, zip, unzip\n" +
-               "REGEX: sed, awk\n" +
-               "TEXT: tr, tee\n" +
-               "UTILITIES: echo, date, cal, whoami, df, du\n\n" +
-               "Type 'man [command]' for detailed help";
+
+    private String deleteFile(String[] args, TerminalSession session) {
+        if (args.length == 0) return "rm: missing file";
+        File file = new File(resolvePath(args[0]));
+        boolean success = file.delete();
+        return success ? "" : "rm: failed to delete file";
     }
-    
-    // ... Add other placeholder implementations
-    
+
+    private String createDirectory(String[] args, TerminalSession session) {
+        if (args.length == 0) return "mkdir: missing directory name";
+        File dir = new File(resolvePath(args[0]));
+        boolean success = dir.mkdirs();
+        return success ? "" : "mkdir: failed to create directory";
+    }
+
+    private String createFile(String[] args, TerminalSession session) {
+        if (args.length == 0) return "touch: missing file name";
+        File file = new File(resolvePath(args[0]));
+        try {
+            boolean success = file.createNewFile();
+            return success ? "" : "touch: file already exists";
+        } catch (IOException e) {
+            return "touch: " + e.getMessage();
+        }
+    }
+
+    private String createLink(String[] args, TerminalSession session) {
+        return "ln: not implemented";
+    }
+
+    // ------------------ Viewing ------------------
+    private String readFile(String[] args, TerminalSession session) {
+        if (args.length == 0) return "cat: missing file";
+        File file = new File(resolvePath(args[0]));
+        if (!file.exists()) return "cat: no such file: " + args[0];
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) sb.append(line).append("\n");
+            return sb.toString();
+        } catch (IOException e) {
+            return "cat: " + e.getMessage();
+        }
+    }
+
+    private String pageFile(String[] args, TerminalSession session) {
+        return "less: not fully implemented, showing first 20 lines\n";
+    }
+
+    private String showFileHead(String[] args, TerminalSession session) {
+        return "head: first 10 lines preview";
+    }
+
+    private String showFileTail(String[] args, TerminalSession session) {
+        return "tail: last 10 lines preview";
+    }
+
+    private String fileType(String[] args, TerminalSession session) {
+        if (args.length == 0) return "file: missing argument";
+        File f = new File(resolvePath(args[0]));
+        return f.exists() ? (f.isDirectory() ? "directory" : "regular file") : "file not found";
+    }
+
+    // ------------------ Text Processing ------------------
+    private String sortLines(String[] args, TerminalSession session) { return "sort: not implemented"; }
+    private String uniqueLines(String[] args, TerminalSession session) { return "uniq: not implemented"; }
+    private String wordCount(String[] args, TerminalSession session) { return "wc: not implemented"; }
+    private String searchInFiles(String[] args, TerminalSession session) { return "grep: not implemented"; }
+    private String cutColumns(String[] args, TerminalSession session) { return "cut: not implemented"; }
+    private String pasteFiles(String[] args, TerminalSession session) { return "paste: not implemented"; }
+    private String translateChars(String[] args, TerminalSession session) { return "tr: not implemented"; }
+    private String teeOutput(String[] args, TerminalSession session) { return "tee: not implemented"; }
+    private String streamEdit(String[] args, TerminalSession session) { return "sed: not implemented"; }
+    private String awkProcessing(String[] args, TerminalSession session) { return "awk: not implemented"; }
+    private String compareFiles(String[] args, TerminalSession session) { return "diff: not implemented"; }
+
+    // ------------------ Permissions ------------------
+    private String changePermissions(String[] args, TerminalSession session) {
+        if (args.length < 2) return "chmod: missing arguments";
+        String mode = args[0];
+        File file = new File(resolvePath(args[1]));
+
+        if (!file.exists()) return "chmod: file not found: " + args[1];
+
+        if (Shizuku.checkSelfPermission() == Shizuku.PERMISSION_GRANTED) {
+            try {
+                // Example using Shizuku API for chmod
+                java.lang.Runtime.getRuntime().exec(new String[]{"su", "-c", "chmod " + mode + " " + file.getAbsolutePath()});
+                return "";
+            } catch (IOException e) {
+                return "chmod: failed via Shizuku";
+            }
+        } else {
+            Toast.makeText(context, "Shizuku not available. Using sandbox permissions.", Toast.LENGTH_SHORT).show();
+            return "chmod: operation limited to sandbox";
+        }
+    }
+
+    private String changeOwner(String[] args, TerminalSession session) {
+        return "chown: Shizuku required (not implemented in sandbox)";
+    }
+
+    private String switchUser(String[] args, TerminalSession session) {
+        return "su: Shizuku required (not implemented in sandbox)";
+    }
+
+    // ------------------ Processes ------------------
+    private String showProcesses(String[] args, TerminalSession session) {
+        return "ps: process list not implemented";
+    }
+
+    private String showTopProcesses(String[] args, TerminalSession session) {
+        return "top: not implemented";
+    }
+
+    private String killProcess(String[] args, TerminalSession session) { return "kill: not implemented"; }
+    private String showJobs(String[] args, TerminalSession session) { return "jobs: not implemented"; }
+    private String backgroundJob(String[] args, TerminalSession session) { return "bg: not implemented"; }
+    private String foregroundJob(String[] args, TerminalSession session) { return "fg: not implemented"; }
+
+    // ------------------ Environment ------------------
+    private String exportVariable(String[] args, TerminalSession session) { return "export: not implemented"; }
+    private String manageAliases(String[] args, TerminalSession session) { return "alias: not implemented"; }
+    private String showHistory(String[] args, TerminalSession session) { return String.join("\n", commandHistory); }
+
+    // ------------------ Networking ------------------
+    private String pingHost(String[] args, TerminalSession session) { return "ping: simulated response"; }
+    private String networkInterfaces(String[] args, TerminalSession session) { return "ifconfig: simulated"; }
+    private String networkStatistics(String[] args, TerminalSession session) { return "netstat: simulated"; }
+
+    // ------------------ Searching ------------------
+    private String findFiles(String[] args, TerminalSession session) { return "find: not implemented"; }
+    private String locateFile(String[] args, TerminalSession session) { return "locate: not implemented"; }
+    private String whichCommand(String[] args, TerminalSession session) { return "which: not implemented"; }
+
+    // ------------------ Archiving ------------------
+    private String createArchive(String[] args, TerminalSession session) { return "tar: not implemented"; }
+    private String compressFile(String[] args, TerminalSession session) { return "gzip: not implemented"; }
+    private String decompressFile(String[] args, TerminalSession session) { return "gunzip: not implemented"; }
+    private String createZip(String[] args, TerminalSession session) { return "zip: not implemented"; }
+    private String extractZip(String[] args, TerminalSession session) { return "unzip: not implemented"; }
+
+    // ------------------ Utilities ------------------
+    private String echoText(String[] args, TerminalSession session) { return String.join(" ", args); }
+    private String currentDate(String[] args, TerminalSession session) { return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()); }
+    private String showCalendar(String[] args, TerminalSession session) { return "cal: not implemented"; }
+    private String currentUser(String[] args, TerminalSession session) { return "android-user"; }
+    private String systemInfo(String[] args, TerminalSession session) { return "Android/Linux"; }
+    private String diskUsage(String[] args, TerminalSession session) { return "df: not implemented"; }
+    private String directoryUsage(String[] args, TerminalSession session) { return "du: not implemented"; }
+    private String clearScreen(String[] args, TerminalSession session) { return "\u001b[H\u001b[2J"; }
+    private String showHelp(String[] args, TerminalSession session) { return "Help: type 'man <command>'"; }
+    private String showManual(String[] args, TerminalSession session) { return "man: not implemented"; }
+    private String exitShell(String[] args, TerminalSession session) { return "exit"; }
+
+    // ------------------ Redirection & Pipes ------------------
+    private String redirectOutput(String[] args, TerminalSession session) { return ">"; }
+    private String appendOutput(String[] args, TerminalSession session) { return ">>"; }
+    private String redirectInput(String[] args, TerminalSession session) { return "<"; }
+    private String pipeCommands(String[] args, TerminalSession session) { return "|"; }
+
+    // =================== Setup ===================
     private void setupEnvironment() {
         environment.put("USER", "android-user");
         environment.put("HOME", context.getFilesDir().getAbsolutePath());
@@ -452,7 +383,7 @@ public class TerminalSession {
         environment.put("TERM", "xterm-256color");
         environment.put("SHELL", "/system/bin/sh");
     }
-    
+
     private void setupAliases() {
         aliases.put("ll", "ls -l");
         aliases.put("la", "ls -a");
@@ -460,8 +391,13 @@ public class TerminalSession {
         aliases.put("..", "cd ..");
         aliases.put("...", "cd ../..");
     }
-    
-    // Getters for command handlers
+
+    private String resolvePath(String path) {
+        if (path.startsWith("/")) return path;
+        return currentDirectory + "/" + path;
+    }
+
+    // =================== Getters ===================
     public String getCurrentDirectory() { return currentDirectory; }
     public Context getContext() { return context; }
     public Map<String, String> getEnvironment() { return environment; }

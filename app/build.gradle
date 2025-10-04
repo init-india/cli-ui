@@ -52,7 +52,7 @@ dependencies {
     implementation 'androidx.work:work-runtime:2.8.1'
 
    //shizuku
-    implementation 'dev.rikka.shizuku:api:13.1.5'
+ implementation 'moe.shizuku:api:13.3.0' // latest Shizuku API
  
     
     // For email functionality
