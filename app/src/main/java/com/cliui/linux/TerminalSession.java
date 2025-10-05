@@ -14,6 +14,7 @@ import java.util.zip.*;
 import java.util.regex.Pattern;
 
 import com.cliui.utils.PermissionManager;
+import com.cliui.utils.ShizukuManager;
 
 public class TerminalSession {
 
@@ -296,38 +297,53 @@ public class TerminalSession {
 
         if (!file.exists()) return "chmod: file not found: " + args[1];
 
-        if (Shizuku.checkSelfPermission() == Shizuku.PERMISSION_GRANTED) {
+        // FIXED: Use ShizukuManager instead of direct Shizuku
+        if (ShizukuManager.isReady()) {
             try {
-                // Example using Shizuku API for chmod
-                java.lang.Runtime.getRuntime().exec(new String[]{"su", "-c", "chmod " + mode + " " + file.getAbsolutePath()});
-                return "";
-            } catch (IOException e) {
-                return "chmod: failed via Shizuku";
+                // Use ShizukuManager for command execution
+                boolean success = ShizukuManager.executeCommand("chmod " + mode + " " + file.getAbsolutePath());
+                return success ? "" : "chmod: failed via Shizuku";
+            } catch (Exception e) {
+                return "chmod: failed via Shizuku - " + e.getMessage();
             }
         } else {
             Toast.makeText(context, "Shizuku not available. Using sandbox permissions.", Toast.LENGTH_SHORT).show();
-            return "chmod: operation limited to sandbox";
+            return "chmod: operation limited to sandbox\n💡 " + ShizukuManager.getStatus();
         }
     }
 
     private String changeOwner(String[] args, TerminalSession session) {
-        return "chown: Shizuku required (not implemented in sandbox)";
+        return "chown: Shizuku required (not implemented in sandbox)\n💡 " + ShizukuManager.getStatus();
     }
 
     private String switchUser(String[] args, TerminalSession session) {
-        return "su: Shizuku required (not implemented in sandbox)";
+        return "su: Shizuku required (not implemented in sandbox)\n💡 " + ShizukuManager.getStatus();
     }
 
     // ------------------ Processes ------------------
     private String showProcesses(String[] args, TerminalSession session) {
-        return "ps: process list not implemented";
+        // Use ShizukuManager for process listing
+        if (ShizukuManager.isReady()) {
+            String result = ShizukuManager.executeCommandWithOutput("ps");
+            return result != null ? result : "ps: failed to get process list";
+        }
+        return "ps: Shizuku required for process listing\n💡 " + ShizukuManager.getStatus();
     }
 
     private String showTopProcesses(String[] args, TerminalSession session) {
         return "top: not implemented";
     }
 
-    private String killProcess(String[] args, TerminalSession session) { return "kill: not implemented"; }
+    private String killProcess(String[] args, TerminalSession session) { 
+        if (args.length == 0) return "kill: missing PID";
+        
+        if (ShizukuManager.isReady()) {
+            boolean success = ShizukuManager.executeCommand("kill " + args[0]);
+            return success ? "✅ Process " + args[0] + " killed" : "❌ Failed to kill process " + args[0];
+        }
+        return "kill: Shizuku required\n💡 " + ShizukuManager.getStatus();
+    }
+    
     private String showJobs(String[] args, TerminalSession session) { return "jobs: not implemented"; }
     private String backgroundJob(String[] args, TerminalSession session) { return "bg: not implemented"; }
     private String foregroundJob(String[] args, TerminalSession session) { return "fg: not implemented"; }
@@ -338,9 +354,31 @@ public class TerminalSession {
     private String showHistory(String[] args, TerminalSession session) { return String.join("\n", commandHistory); }
 
     // ------------------ Networking ------------------
-    private String pingHost(String[] args, TerminalSession session) { return "ping: simulated response"; }
-    private String networkInterfaces(String[] args, TerminalSession session) { return "ifconfig: simulated"; }
-    private String networkStatistics(String[] args, TerminalSession session) { return "netstat: simulated"; }
+    private String pingHost(String[] args, TerminalSession session) { 
+        if (args.length == 0) return "ping: missing host";
+        
+        if (ShizukuManager.isReady()) {
+            String result = ShizukuManager.executeCommandWithOutput("ping -c 4 " + args[0]);
+            return result != null ? result : "ping: failed to execute";
+        }
+        return "ping: Shizuku required\n💡 " + ShizukuManager.getStatus();
+    }
+    
+    private String networkInterfaces(String[] args, TerminalSession session) { 
+        if (ShizukuManager.isReady()) {
+            String result = ShizukuManager.executeCommandWithOutput("ifconfig");
+            return result != null ? result : "ifconfig: failed to execute";
+        }
+        return "ifconfig: Shizuku required\n💡 " + ShizukuManager.getStatus();
+    }
+    
+    private String networkStatistics(String[] args, TerminalSession session) { 
+        if (ShizukuManager.isReady()) {
+            String result = ShizukuManager.executeCommandWithOutput("netstat");
+            return result != null ? result : "netstat: failed to execute";
+        }
+        return "netstat: Shizuku required\n💡 " + ShizukuManager.getStatus();
+    }
 
     // ------------------ Searching ------------------
     private String findFiles(String[] args, TerminalSession session) { return "find: not implemented"; }
@@ -359,12 +397,62 @@ public class TerminalSession {
     private String currentDate(String[] args, TerminalSession session) { return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()); }
     private String showCalendar(String[] args, TerminalSession session) { return "cal: not implemented"; }
     private String currentUser(String[] args, TerminalSession session) { return "android-user"; }
-    private String systemInfo(String[] args, TerminalSession session) { return "Android/Linux"; }
-    private String diskUsage(String[] args, TerminalSession session) { return "df: not implemented"; }
-    private String directoryUsage(String[] args, TerminalSession session) { return "du: not implemented"; }
+    private String systemInfo(String[] args, TerminalSession session) { 
+        if (ShizukuManager.isReady()) {
+            String result = ShizukuManager.executeCommandWithOutput("uname -a");
+            return result != null ? result : "Android/Linux";
+        }
+        return "Android/Linux (Shizuku not available for detailed info)";
+    }
+    
+    private String diskUsage(String[] args, TerminalSession session) { 
+        if (ShizukuManager.isReady()) {
+            String result = ShizukuManager.executeCommandWithOutput("df -h");
+            return result != null ? result : "df: failed to execute";
+        }
+        return "df: Shizuku required\n💡 " + ShizukuManager.getStatus();
+    }
+    
+    private String directoryUsage(String[] args, TerminalSession session) { 
+        if (args.length == 0) {
+            // Show current directory usage
+            File dir = new File(session.currentDirectory);
+            return "du: " + dir.getAbsolutePath() + " - " + getDirectorySize(dir) + " bytes";
+        }
+        return "du: basic implementation - use Shizuku for detailed usage";
+    }
+    
+    private long getDirectorySize(File directory) {
+        long length = 0;
+        File[] files = directory.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                if (file.isFile()) {
+                    length += file.length();
+                } else {
+                    length += getDirectorySize(file);
+                }
+            }
+        }
+        return length;
+    }
+    
     private String clearScreen(String[] args, TerminalSession session) { return "\u001b[H\u001b[2J"; }
-    private String showHelp(String[] args, TerminalSession session) { return "Help: type 'man <command>'"; }
-    private String showManual(String[] args, TerminalSession session) { return "man: not implemented"; }
+    private String showHelp(String[] args, TerminalSession session) { 
+        return "Available Commands:\n" +
+               "• File: ls, cd, pwd, cp, mv, rm, mkdir, touch, cat\n" +
+               "• System: ps, kill, whoami, uname, df, du\n" + 
+               "• Network: ping, ifconfig, netstat\n" +
+               "• Permissions: chmod, chown, su (requires Shizuku)\n" +
+               "• Utilities: echo, date, clear, history, help\n\n" +
+               "🔧 Shizuku Status: " + ShizukuManager.getStatus();
+    }
+    
+    private String showManual(String[] args, TerminalSession session) { 
+        if (args.length == 0) return "man: missing command name";
+        return "Manual for '" + args[0] + "' not available\nUse 'help' for general usage";
+    }
+    
     private String exitShell(String[] args, TerminalSession session) { return "exit"; }
 
     // ------------------ Redirection & Pipes ------------------
