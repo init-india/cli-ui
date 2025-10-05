@@ -11,9 +11,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-public class NotificationsManager extends NotificationListenerService {
-    private static final String TAG = "NotificationsManager";
-    private static NotificationsManager instance;
+public class NotificationManager extends NotificationListenerService {
+    private static final String TAG = "NotificationManager";
+    private static NotificationManager instance;
     
     // Permanent storage for all notifications
     private static final List<NotificationItem> allNotifications = Collections.synchronizedList(new ArrayList<>());
@@ -67,17 +67,17 @@ public class NotificationsManager extends NotificationListenerService {
         }
     }
     
-    public NotificationsManager() {}
+    public NotificationManager() {}
     
-    public NotificationsManager(Context context) {
+    public NotificationManager(Context context) {
         this.context = context;
         this.timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
         instance = this;
     }
     
-    public static NotificationsManager getInstance(Context context) {
+    public static NotificationManager getInstance(Context context) {
         if (instance == null) {
-            instance = new NotificationsManager(context);
+            instance = new NotificationManager(context);
         }
         return instance;
     }
