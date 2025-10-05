@@ -13,8 +13,7 @@ import java.util.*;
 import java.util.zip.*;
 import java.util.regex.Pattern;
 
-import dev.rikka.shizuku.Shizuku;
-import dev.rikka.shizuku.ShizukuProvider;
+import com.cliui.utils.PermissionManager;
 
 public class TerminalSession {
 

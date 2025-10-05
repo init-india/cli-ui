@@ -7,6 +7,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
+import com.cliui.utils.PermissionManager;
+
+
 public class ShizukuManager {
     private static final String TAG = "ShizukuManager";
     private static final long COMMAND_TIMEOUT_MS = 30000;

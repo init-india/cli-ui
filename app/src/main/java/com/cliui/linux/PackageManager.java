@@ -4,6 +4,8 @@ import android.content.Context;
 import com.cliui.utils.PermissionManager;
 import java.util.*;
 
+import com.cliui.utils.ShizukuManager;
+
 public class PackageManager {
     private Context context;
     private PermissionManager permissionManager;
