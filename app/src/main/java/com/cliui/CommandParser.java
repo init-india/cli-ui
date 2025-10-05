@@ -9,7 +9,7 @@ import com.cliui.modules.*;
 
 import com.cliui.utils.PermissionManager;
 
-
+import android.annotation.SuppressLint;
 
 public class CommandParser {
     private Context context;
@@ -253,7 +253,8 @@ public class CommandParser {
             return "Error: Telephony permission required";
         }
     }
-    
+     
+    @SuppressLint("MissingPermission")    
     private String getDeviceInfo() {
         try {
             if (!permissionManager.areAllPermissionsGranted(PermissionManager.PHONE_PERMISSIONS)) {
