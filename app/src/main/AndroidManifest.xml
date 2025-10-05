@@ -43,6 +43,74 @@
 <uses-feature android:name="android.hardware.wifi" android:required="false" />
 <uses-feature android:name="android.hardware.microphone" android:required="false" />
 
+<queries>
+    <!-- Communication Apps -->
+    <package android:name="com.whatsapp" />
+    <package android:name="com.google.android.gm" />
+    <package android:name="com.android.email" />
+    <package android:name="com.samsung.android.email.provider" />
+    
+    <!-- Maps & Navigation -->
+    <package android:name="com.google.android.apps.maps" />
+    <package android:name="com.waze" />
+    <package android:name="com.google.android.apps.mapslite" />
+    
+    <!-- System & Settings -->
+    <package android:name="com.android.settings" />
+    <package android:name="com.android.phone" />
+    <package android:name="com.android.dialer" />
+    <package android:name="com.android.mms" />
+    <package android:name="com.android.contacts" />
+    <package android:name="com.android.bluetooth" />
+    <package android:name="com.android.camera" />
+    
+    <!-- Shizuku & System Tools -->
+    <package android:name="moe.shizuku.privileged.api" />
+    <package android:name="com.termux" />
+    <package android:name="com.topjohnwu.magisk" />
+    
+    <!-- Intent-based Queries for Broad Compatibility -->
+    <intent>
+        <action android:name="android.intent.action.DIAL" />
+    </intent>
+    <intent>
+        <action android:name="android.intent.action.SENDTO" />
+        <data android:scheme="smsto" />
+    </intent>
+    <intent>
+        <action android:name="android.intent.action.SEND" />
+        <data android:mimeType="text/plain" />
+    </intent>
+    <intent>
+        <action android:name="android.intent.action.SEND" />
+        <data android:mimeType="image/*" />
+    </intent>
+    <intent>
+        <action android:name="android.intent.action.VIEW" />
+        <data android:scheme="http" />
+    </intent>
+    <intent>
+        <action android:name="android.intent.action.VIEW" />
+        <data android:scheme="https" />
+    </intent>
+    <intent>
+        <action android:name="android.intent.action.VIEW" />
+        <data android:scheme="geo" />
+    </intent>
+    <intent>
+        <action android:name="android.media.action.IMAGE_CAPTURE" />
+    </intent>
+    <intent>
+        <action android:name="android.settings.WIFI_SETTINGS" />
+    </intent>
+    <intent>
+        <action android:name="android.settings.BLUETOOTH_SETTINGS" />
+    </intent>
+    <intent>
+        <action android:name="android.settings.LOCATION_SOURCE_SETTINGS" />
+    </intent>
+</queries>
+
 
     <application
         android:allowBackup="true"
