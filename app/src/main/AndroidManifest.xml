@@ -85,11 +85,7 @@
             </intent-filter>
         </receiver>
 
-        <!-- Foreground Service for Navigation -->
-        <service
-            android:name=".modules.NavigationModule$NavigationService"
-            android:enabled="true"
-            android:exported="false" />
+       
 
     </application>
 </manifest>
