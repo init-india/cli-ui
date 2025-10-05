@@ -133,7 +133,7 @@ public class PermissionManager {
     }
 
     private PermissionManager(Context context) {
-        this.context = context;
+        this.context = context.getApplicationContext();
         initializeUserPreferences();
     }
 
@@ -144,7 +144,7 @@ public class PermissionManager {
         return instance;
     }
 
-    // ========== NEW FALLBACK METHODS ==========
+    // ========== ENHANCED AUTHENTICATION METHODS ==========
 
     /**
      * Enhanced authenticate method with fallback and sandbox support
@@ -354,7 +354,7 @@ public class PermissionManager {
         }
     }
 
-    // ========== YOUR ORIGINAL METHODS (KEPT AS-IS) ==========
+    // ========== ORIGINAL METHODS (PRESERVED) ==========
 
     public boolean canExecute(String command) {
         String baseCommand = getBaseCommand(command);

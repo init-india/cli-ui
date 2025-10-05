@@ -109,4 +109,54 @@ public class ShizukuManager {
             this.exitCode = exitCode;
         }
     }
+
+    // ADD THIS MISSING METHOD THAT PermissionManager EXPECTS
+    public static CommandResult executeCommandDetailed(String cmd) {
+        if (!isReady()) {
+            return new CommandResult(false, "Shizuku not ready: " + getStatus(), -1);
+        }
+        
+        Process process = null;
+        BufferedReader reader = null;
+        BufferedReader errorReader = null;
+        try {
+            process = Runtime.getRuntime().exec(new String[]{"sh", "-c", cmd});
+            reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+            
+            StringBuilder output = new StringBuilder();
+            StringBuilder errorOutput = new StringBuilder();
+            
+            String line;
+            while ((line = reader.readLine()) != null) {
+                output.append(line).append("\n");
+            }
+            while ((line = errorReader.readLine()) != null) {
+                errorOutput.append(line).append("\n");
+            }
+            
+            int exitCode = process.waitFor();
+            
+            String finalOutput = output.toString().trim();
+            if (errorOutput.length() > 0) {
+                if (finalOutput.length() > 0) {
+                    finalOutput += "\n" + errorOutput.toString().trim();
+                } else {
+                    finalOutput = errorOutput.toString().trim();
+                }
+            }
+            
+            return new CommandResult(exitCode == 0, finalOutput, exitCode);
+        } catch (Exception e) {
+            return new CommandResult(false, "Error: " + e.getMessage(), -1);
+        } finally {
+            try {
+                if (reader != null) reader.close();
+                if (errorReader != null) errorReader.close();
+                if (process != null) process.destroy();
+            } catch (Exception e) {
+                // Ignore
+            }
+        }
+    }
 }
