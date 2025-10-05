@@ -15,10 +15,10 @@ public class NotificationManager extends NotificationListenerService {
     private static final String TAG = "NotificationManager";
     private static NotificationManager instance;
     
-    // PERMANENT storage for ALL notifications - NEVER cleared
+    // Permanent storage for all notifications
     private static final List<NotificationItem> allNotifications = Collections.synchronizedList(new ArrayList<>());
     
-    // LIVE FEED buffer for home screen - grows indefinitely until clear
+    // Live feed buffer for home screen display
     private static final List<String> liveFeedBuffer = Collections.synchronizedList(new ArrayList<>());
     
     private Context context;
@@ -97,7 +97,7 @@ public class NotificationManager extends NotificationListenerService {
             
             Log.d(TAG, "New notification: " + cliFormat);
             
-            // ALWAYS store in PERMANENT storage - NEVER deleted
+            // Always store in permanent storage
             synchronized (allNotifications) {
                 allNotifications.add(item);
             }
@@ -115,19 +115,16 @@ public class NotificationManager extends NotificationListenerService {
     @Override
     public void onNotificationRemoved(StatusBarNotification sbn) {
         // Notifications persist even when dismissed from system
-        // We NEVER remove them from our storage
     }
     
     @Override
     public void onListenerConnected() {
         Log.i(TAG, "Notification listener connected");
-        // Load existing notifications when connected
         loadExistingNotifications();
     }
     
     private void loadExistingNotifications() {
         try {
-            // Get active notifications from system
             StatusBarNotification[] activeNotifications = getActiveNotifications();
             if (activeNotifications != null) {
                 for (StatusBarNotification sbn : activeNotifications) {
@@ -161,7 +158,6 @@ public class NotificationManager extends NotificationListenerService {
     public void setHomeScreenActive(boolean active) {
         this.isHomeScreenActive = active;
         if (active) {
-            // When returning to home screen, refresh live feed with ALL notifications
             refreshLiveFeed();
         }
     }
@@ -169,7 +165,7 @@ public class NotificationManager extends NotificationListenerService {
     private void refreshLiveFeed() {
         synchronized (liveFeedBuffer) {
             liveFeedBuffer.clear();
-            // Add ALL notifications to live feed (can be thousands - scrollable)
+            // Add all notifications to live feed
             synchronized (allNotifications) {
                 for (NotificationItem item : allNotifications) {
                     liveFeedBuffer.add(item.toCLIFormat());
@@ -182,44 +178,32 @@ public class NotificationManager extends NotificationListenerService {
         synchronized (liveFeedBuffer) {
             // Add to bottom - live feed grows indefinitely
             liveFeedBuffer.add(notification);
-            // NO LIMIT - grows until user runs "clear"
         }
     }
     
-    // Command handlers - STRICTLY following the logic
-    public String handleNotificationsCommand() {
+    // Get all notifications for display
+    public String getAllNotifications() {
         if (allNotifications.isEmpty()) {
-            return "No notifications yet.\n\n" +
-                   "Notifications will appear here when received.\n" +
-                   "They also show on home screen as live feed.";
+            return "No notifications yet.";
         }
         
         StringBuilder sb = new StringBuilder();
-        sb.append("🕘 ALL NOTIFICATIONS (").append(allNotifications.size()).append(" total)\n");
-        sb.append("──────────────────────────────────────────────────\n");
-        
-        // Show ALL notifications in chronological order (oldest first)
-        // User can scroll up/down via touch - NO LIMITS
+        // Show all notifications in chronological order
         synchronized (allNotifications) {
             for (NotificationItem item : allNotifications) {
                 sb.append(item.toCLIFormat()).append("\n");
             }
         }
         
-        sb.append("──────────────────────────────────────────────────\n");
-        sb.append("Scroll up/down to view all ").append(allNotifications.size()).append(" notifications");
-        
-        return sb.toString();
+        return sb.toString().trim();
     }
     
-    public String handleClearCommand() {
-        // ONLY clear the live feed buffer - NEVER touch permanent storage
+    // Clear screen display only
+    public String clearScreen() {
         synchronized (liveFeedBuffer) {
             int clearedCount = liveFeedBuffer.size();
             liveFeedBuffer.clear();
-            return "✓ Screen cleared (" + clearedCount + " notifications removed from display)\n" +
-                   "All " + allNotifications.size() + " notifications remain in storage\n" +
-                   "Use 'notifications' command to view them again";
+            return "Screen cleared. " + allNotifications.size() + " notifications remain in storage.";
         }
     }
     
@@ -235,11 +219,6 @@ public class NotificationManager extends NotificationListenerService {
     }
     
     public int getNotificationCount() {
-        return allNotifications.size();
-    }
-    
-    // Get ALL notifications count (permanent storage)
-    public int getTotalNotificationCount() {
         return allNotifications.size();
     }
 }
