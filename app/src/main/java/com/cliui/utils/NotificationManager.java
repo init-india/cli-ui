@@ -11,6 +11,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+import com.cliui.modules.CommandModule;
+
+
 public class NotificationManager extends NotificationListenerService implements CommandModule {
     private static final String TAG = "NotificationManager";
     private static NotificationManager instance;
