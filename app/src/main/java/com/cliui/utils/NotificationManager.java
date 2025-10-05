@@ -11,7 +11,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-public class NotificationManager extends NotificationListenerService {
+public class NotificationManager extends NotificationListenerService implements CommandModule {
     private static final String TAG = "NotificationManager";
     private static NotificationManager instance;
     
@@ -80,6 +80,15 @@ public class NotificationManager extends NotificationListenerService {
             instance = new NotificationManager(context);
         }
         return instance;
+    }
+    
+    // CommandModule interface implementation
+    @Override
+    public String execute(String[] tokens) {
+        if (tokens.length == 1 && tokens[0].equals("notifications")) {
+            return getAllNotifications();
+        }
+        return "Usage: notifications";
     }
     
     // Called when a new notification is posted
