@@ -11,10 +11,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-import com.cliui.modules.CommandModule;
-
-
-public class NotificationManager extends NotificationListenerService implements CommandModule {
+public class NotificationManager extends NotificationListenerService {
     private static final String TAG = "NotificationManager";
     private static NotificationManager instance;
     
@@ -83,15 +80,6 @@ public class NotificationManager extends NotificationListenerService implements 
             instance = new NotificationManager(context);
         }
         return instance;
-    }
-    
-    // CommandModule interface implementation
-    @Override
-    public String execute(String[] tokens) {
-        if (tokens.length == 1 && tokens[0].equals("notifications")) {
-            return getAllNotifications();
-        }
-        return "Usage: notifications";
     }
     
     // Called when a new notification is posted
@@ -193,23 +181,6 @@ public class NotificationManager extends NotificationListenerService implements 
         }
     }
     
-    // Get all notifications for display
-    public String getAllNotifications() {
-        if (allNotifications.isEmpty()) {
-            return "No notifications yet.";
-        }
-        
-        StringBuilder sb = new StringBuilder();
-        // Show all notifications in chronological order
-        synchronized (allNotifications) {
-            for (NotificationItem item : allNotifications) {
-                sb.append(item.toCLIFormat()).append("\n");
-            }
-        }
-        
-        return sb.toString().trim();
-    }
-    
     // Clear screen display only
     public String clearScreen() {
         synchronized (liveFeedBuffer) {
@@ -232,5 +203,22 @@ public class NotificationManager extends NotificationListenerService implements 
     
     public int getNotificationCount() {
         return allNotifications.size();
+    }
+    
+    // Get all notifications for manual viewing (if needed later)
+    public String getAllNotifications() {
+        if (allNotifications.isEmpty()) {
+            return "No notifications yet.";
+        }
+        
+        StringBuilder sb = new StringBuilder();
+        // Show all notifications in chronological order
+        synchronized (allNotifications) {
+            for (NotificationItem item : allNotifications) {
+                sb.append(item.toCLIFormat()).append("\n");
+            }
+        }
+        
+        return sb.toString().trim();
     }
 }
