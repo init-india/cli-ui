@@ -6,6 +6,8 @@ import android.content.Intent;
 import com.cliui.utils.PermissionManager;
 import com.cliui.utils.ShizukuManager;
 
+import android.annotation.SuppressLint;
+
 public class SettingsModule implements CommandModule {
     private Context context;
     private PermissionManager permissionManager;
@@ -26,7 +28,9 @@ public class SettingsModule implements CommandModule {
         this.permissionManager = PermissionManager.getInstance(context);
         loadCurrentSettings(); // Load real current settings
     }
-    
+
+
+@SuppressLint("MissingPermission")    
     @Override
     public String execute(String[] tokens) {
         if (tokens.length == 0) return getUsage();
@@ -191,6 +195,9 @@ public class SettingsModule implements CommandModule {
     
     // REAL SETTING CONTROLS WITH SHIZUKU
     
+
+
+@SuppressLint("MissingPermission")
     private String setRealBrightness(String value) {
         try {
             int newBrightness = Integer.parseInt(value);
@@ -232,6 +239,8 @@ public class SettingsModule implements CommandModule {
         return String.valueOf(brightness) + " (cached)";
     }
     
+
+@SuppressLint("MissingPermission")
     private String setRealMediaVolume(String value) {
         try {
             int volume = Integer.parseInt(value);
@@ -273,6 +282,8 @@ public class SettingsModule implements CommandModule {
         return String.valueOf(mediaVolume) + " (cached)";
     }
     
+
+@SuppressLint("MissingPermission")
     private String setRealDarkMode(String value) {
         boolean enable = value.equalsIgnoreCase("on") || value.equalsIgnoreCase("yes") || value.equals("1");
         
@@ -301,6 +312,8 @@ public class SettingsModule implements CommandModule {
         return darkMode;
     }
     
+
+@SuppressLint("MissingPermission")
     private String setRealAutoRotate(String value) {
         boolean enable = value.equalsIgnoreCase("on") || value.equalsIgnoreCase("yes");
         
@@ -329,6 +342,8 @@ public class SettingsModule implements CommandModule {
         return autoRotate;
     }
     
+
+@SuppressLint("MissingPermission")
     private String setRealTimeout(String value) {
         try {
             int timeout = Integer.parseInt(value);
@@ -370,6 +385,7 @@ public class SettingsModule implements CommandModule {
         return String.valueOf(screenTimeout) + " (cached)";
     }
     
+@SuppressLint("MissingPermission")
     private String setDeveloperOptions(String value) {
         boolean enable = value.equalsIgnoreCase("on") || value.equalsIgnoreCase("yes");
         
@@ -397,6 +413,7 @@ public class SettingsModule implements CommandModule {
         }
     }
     
+@SuppressLint("MissingPermission")
     private String setAlarmVolume(String value) {
         try {
             int volume = Integer.parseInt(value);
@@ -410,12 +427,15 @@ public class SettingsModule implements CommandModule {
         }
     }
     
+
+@SuppressLint("MissingPermission")
     private String setVibrate(String value) {
         boolean enable = value.equalsIgnoreCase("on") || value.equalsIgnoreCase("yes");
         vibrate = enable;
         return "✅ Vibrate " + (enable ? "enabled" : "disabled") + "\n💡 Apply in system sound settings";
     }
     
+@SuppressLint("MissingPermission")
     private String setRingtone(String value) {
         ringtone = value;
         // Open system ringtone settings

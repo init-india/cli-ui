@@ -9,6 +9,8 @@ import java.util.Set;
 import com.cliui.utils.PermissionManager;
 import com.cliui.utils.ShizukuManager;
 
+import android.annotation.SuppressLint;
+
 public class ConnectivityModule implements CommandModule {
 
     public enum ConnectivityState {
@@ -125,6 +127,8 @@ public class ConnectivityModule implements CommandModule {
         return false; // fallback
     }
 
+@SuppressLint("MissingPermission")
+
     private String enableWifi() {
         if (!ShizukuManager.isAvailable()) {
             return "❌ Shizuku not available for WiFi control";
@@ -134,6 +138,8 @@ public class ConnectivityModule implements CommandModule {
         return success ? "✅ WiFi enabled" : "❌ Failed to enable WiFi";
     }
 
+@SuppressLint("MissingPermission")
+
     private String disableWifi() {
         if (!ShizukuManager.isAvailable()) {
             return "❌ Shizuku not available for WiFi control";
@@ -142,6 +148,9 @@ public class ConnectivityModule implements CommandModule {
         boolean success = ShizukuManager.executeCommand("svc wifi disable");
         return success ? "✅ WiFi disabled" : "❌ Failed to disable WiFi";
     }
+
+
+@SuppressLint("MissingPermission")
 
     private String scanWifiNetworks() {
         // For WiFi scanning, we need location permissions in addition to Shizuku
@@ -167,6 +176,9 @@ public class ConnectivityModule implements CommandModule {
             return "❌ Failed to scan WiFi networks: " + e.getMessage();
         }
     }
+
+
+@SuppressLint("MissingPermission")
 
     private String listWifiNetworks() {
         if (availableNetworks.isEmpty()) {
@@ -216,6 +228,8 @@ public class ConnectivityModule implements CommandModule {
         }
     }
 
+
+@SuppressLint("MissingPermission")
     private String enableBluetooth() {
         // Try Shizuku first for system-level control
         if (ShizukuManager.isAvailable()) {
@@ -231,6 +245,8 @@ public class ConnectivityModule implements CommandModule {
         }
     }
 
+
+@SuppressLint("MissingPermission")
     private String disableBluetooth() {
         // Try Shizuku first for system-level control
         if (ShizukuManager.isAvailable()) {
@@ -245,6 +261,8 @@ public class ConnectivityModule implements CommandModule {
             return "❌ Failed to disable Bluetooth";
         }
     }
+
+@SuppressLint("MissingPermission")
 
     private String scanBluetoothDevices() {
         if (!bluetoothAdapter.isEnabled()) {
@@ -264,6 +282,7 @@ public class ConnectivityModule implements CommandModule {
                "Type 'bluetooth devices' to see paired devices";
     }
 
+@SuppressLint("MissingPermission")
     private String listBluetoothDevices() {
         if (bluetoothAdapter == null) {
             return "❌ Bluetooth not available";
@@ -312,6 +331,9 @@ public class ConnectivityModule implements CommandModule {
         }
     }
 
+
+@SuppressLint("MissingPermission")
+
     private String enableHotspot() {
         if (!ShizukuManager.isAvailable()) {
             return "❌ Shizuku not available for hotspot control";
@@ -323,6 +345,9 @@ public class ConnectivityModule implements CommandModule {
                "📱 Please check system settings for manual setup";
     }
 
+
+@SuppressLint("MissingPermission")
+
     private String disableHotspot() {
         if (!ShizukuManager.isAvailable()) {
             return "❌ Shizuku not available for hotspot control";
@@ -331,6 +356,8 @@ public class ConnectivityModule implements CommandModule {
         boolean success = ShizukuManager.executeCommand("svc wifi set-usb-tethering disabled");
         return success ? "✅ Hotspot disabled" : "❌ Failed to disable hotspot";
     }
+
+@SuppressLint("MissingPermission")
 
     private String getHotspotStatus() {
         return "📱 Hotspot Status:\n" +
@@ -345,6 +372,8 @@ public class ConnectivityModule implements CommandModule {
         String btScan = scanBluetoothDevices();
         return wifiScan + "\n\n" + btScan;
     }
+
+@SuppressLint("MissingPermission")
 
     private String getConnectivityStatus() {
         StringBuilder status = new StringBuilder();
