@@ -44,7 +44,7 @@ public class CommandParser {
         modules.put("mail", new EmailModule(context));
         modules.put("whatsapp", new WhatsAppModule(context));
         modules.put("wh", new WhatsAppModule(context));
-        modules.put("notifications", new NotificationManager(context));
+       // modules.put("notifications", new NotificationManager(context));
         modules.put("settings", new SettingsModule(context));
         modules.put("contact", new ContactModule(context));
     }
