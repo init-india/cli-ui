@@ -3,7 +3,6 @@ package com.cliui.modules;
 import android.content.Context;
 import com.cliui.utils.PermissionManager;
 import com.cliui.utils.ShizukuManager;
-import com.cliui.utils.Authentication;
 import com.cliui.linux.TerminalSession;
 import com.cliui.linux.PackageManager;
 import java.util.*;
@@ -35,7 +34,7 @@ public class LinuxModule implements CommandModule {
         }
 
         // Require authentication for system-level operations
-        if (requiresAuthentication(command) && !Authentication.authenticate("linux_access")) {
+        if (requiresAuthentication(command) && !permissionManager.authenticate("linux_access")) {
             return "🔒 Authentication required for Linux operations\n" +
                    "Please authenticate to use system commands";
         }

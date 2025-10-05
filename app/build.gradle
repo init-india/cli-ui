@@ -52,8 +52,7 @@ dependencies {
     implementation 'androidx.work:work-runtime:2.8.1'
 
    //shizuku
-    implementation 'dev.rikka.shizuku:api:12.1.0'
-    implementation 'dev.rikka.shizuku:provider:12.1.0'
+   implementation 'com.github.RikkaApps:Shizuku-API:13.1.0'
 
  
     

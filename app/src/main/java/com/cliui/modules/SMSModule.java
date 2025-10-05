@@ -5,7 +5,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.provider.Telephony;
 import android.telephony.SmsManager;
-import com.cliui.utils.Authentication;
+
 import com.cliui.utils.PermissionManager;
 import com.cliui.utils.ShizukuManager;
 import java.text.SimpleDateFormat;
@@ -47,7 +47,8 @@ public class SMSModule implements CommandModule {
         }
 
         // Require authentication for SMS access
-        if (!Authentication.authenticate("sms_access")) {
+   PermissionManager permissionManager = PermissionManager.getInstance(context);
+if (!permissionManager.authenticate("sms_access")) {
             return "🔒 Authentication required for SMS access\n" +
                    "Please authenticate to read and send messages";
         }

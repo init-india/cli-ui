@@ -3,7 +3,7 @@ package com.cliui.modules;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import com.cliui.utils.Authentication;
+
 import com.cliui.utils.PermissionManager;
 import com.cliui.utils.ShizukuManager;
 import java.text.SimpleDateFormat;
@@ -45,7 +45,8 @@ public class EmailModule implements CommandModule {
         }
 
         // Require authentication for Gmail access
-        if (!Authentication.authenticate("email_access")) {
+       PermissionManager permissionManager = PermissionManager.getInstance(context);
+if (!permissionManager.authenticate("email_access")) {
             return "🔒 Authentication required for email access\n" +
                    "Please authenticate to manage emails";
         }

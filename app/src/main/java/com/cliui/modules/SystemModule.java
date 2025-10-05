@@ -6,7 +6,7 @@ import android.provider.AlarmClock;
 import android.provider.Settings;
 import com.cliui.utils.PermissionManager;
 import com.cliui.utils.ShizukuManager;
-import com.cliui.utils.Authentication;
+
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -33,7 +33,8 @@ public class SystemModule implements CommandModule {
         }
 
         // Require authentication for system control
-        if (!Authentication.authenticate("system_control")) {
+       PermissionManager permissionManager = PermissionManager.getInstance(context);
+if (!permissionManager.authenticate("system_control")) {
             return "🔒 Authentication required for system control\n" +
                    "Please authenticate to modify system settings";
         }

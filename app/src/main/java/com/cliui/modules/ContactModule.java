@@ -6,7 +6,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.content.ContentValues;
 import com.cliui.utils.PermissionManager;
-import com.cliui.utils.Authentication;
+
 import com.cliui.utils.ShizukuManager;
 import java.util.*;
 
@@ -41,7 +41,8 @@ public class ContactModule implements CommandModule {
         }
 
         // Require authentication for contact operations
-        if (!Authentication.authenticate("contact_access")) {
+        PermissionManager permissionManager = PermissionManager.getInstance(context);
+if (!permissionManager.authenticate("contact_access")) {
             return "🔒 Authentication required for contact access\n" +
                    "Please authenticate to manage contacts";
         }

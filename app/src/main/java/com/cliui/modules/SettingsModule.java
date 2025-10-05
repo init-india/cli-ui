@@ -4,7 +4,6 @@ import android.content.Context;
 import android.provider.Settings;
 import android.content.Intent;
 import com.cliui.utils.PermissionManager;
-import com.cliui.utils.Authentication;
 import com.cliui.utils.ShizukuManager;
 
 public class SettingsModule implements CommandModule {
@@ -41,7 +40,7 @@ public class SettingsModule implements CommandModule {
         }
 
         // Require authentication for system settings changes
-        if (tokens.length >= 3 && !Authentication.authenticate("settings_change")) {
+        if (tokens.length >= 3 && !permissionManager.authenticate("settings_change")) {
             return "🔒 Authentication required for settings changes\n" +
                    "Please authenticate to modify system settings";
         }
@@ -459,7 +458,7 @@ public class SettingsModule implements CommandModule {
     
     // Placeholder methods for security settings
     private boolean isBiometricEnabled() { 
-        return Authentication.isBiometricAvailable(context);
+        return permissionManager.isBiometricAvailable(context);
     }
     
     private boolean isPinSet() { 

@@ -4,11 +4,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import com.cliui.utils.PermissionManager;
-import com.cliui.utils.Authentication;
+
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-public class WhatsAppModule implements CommandModule {
+ class WhatsAppModule implements CommandModule {
     private Context context;
     private PermissionManager permissionManager;
     
@@ -32,7 +32,8 @@ public class WhatsAppModule implements CommandModule {
         String command = tokens[0].toLowerCase();
         
         // Require biometric/pin authentication
-        if (!Authentication.authenticate("whatsapp_access")) {
+       PermissionManager permissionManager = PermissionManager.getInstance(context);
+if (!permissionManager.authenticate("whatsapp_access")) {
             return "🔒 Biometric/PIN authentication required for WhatsApp";
         }
         

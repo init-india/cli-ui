@@ -10,7 +10,7 @@ import android.os.Handler;
 import android.os.Looper;
 import com.cliui.utils.PermissionManager;
 import com.cliui.utils.ShizukuManager;
-import com.cliui.utils.Authentication;
+
 import org.json.JSONObject;
 import org.json.JSONArray;
 import java.io.BufferedReader;
@@ -71,7 +71,8 @@ public class NavigationModule implements CommandModule {
         }
 
         // Require authentication for navigation access
-        if (!Authentication.authenticate("navigation_access")) {
+       PermissionManager permissionManager = PermissionManager.getInstance(context);
+if (!permissionManager.authenticate("navigation_access")) {
             return "🔒 Authentication required for navigation\n" +
                    "Please authenticate to use navigation features";
         }
