@@ -5,12 +5,13 @@ import android.provider.ContactsContract;
 import android.database.Cursor;
 import android.net.Uri;
 import android.content.ContentValues;
+import android.util.Log;
 import com.cliui.utils.PermissionManager;
-
 import com.cliui.utils.ShizukuManager;
 import java.util.*;
 
 public class ContactModule implements CommandModule {
+    private static final String TAG = "ContactModule";
     private Context context;
     private PermissionManager permissionManager;
     
@@ -42,7 +43,7 @@ public class ContactModule implements CommandModule {
 
         // Require authentication for contact operations
         PermissionManager permissionManager = PermissionManager.getInstance(context);
-if (!permissionManager.authenticate("contact_access")) {
+        if (!permissionManager.authenticate("contact_access")) {
             return "🔒 Authentication required for contact access\n" +
                    "Please authenticate to manage contacts";
         }
@@ -543,13 +544,17 @@ if (!permissionManager.authenticate("contact_access")) {
             );
             
             if (cursor != null && cursor.moveToFirst()) {
-                long contactId = cursor.getLong(0);
+                int idIndex = cursor.getColumnIndex(ContactsContract.Contacts._ID);
+                if (idIndex >= 0) {
+                    long contactId = cursor.getLong(idIndex);
+                    cursor.close();
+                    
+                    // Delete the contact
+                    Uri contactUri = Uri.withAppendedPath(ContactsContract.Contacts.CONTENT_URI, String.valueOf(contactId));
+                    int deleted = context.getContentResolver().delete(contactUri, null, null);
+                    return deleted > 0;
+                }
                 cursor.close();
-                
-                // Delete the contact
-                Uri contactUri = Uri.withAppendedPath(ContactsContract.Contacts.CONTENT_URI, String.valueOf(contactId));
-                int deleted = context.getContentResolver().delete(contactUri, null, null);
-                return deleted > 0;
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -637,47 +642,65 @@ if (!permissionManager.authenticate("contact_access")) {
             );
             
             if (cursor != null) {
+                int idIndex = cursor.getColumnIndex(ContactsContract.Contacts._ID);
+                int nameIndex = cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME);
+                
                 while (cursor.moveToNext()) {
-                    String id = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts._ID));
-                    String name = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+                    String id = null;
+                    String name = null;
                     
-                    Contact contact = new Contact();
-                    contact.name = name;
-                    
-                    // Get phone numbers
-                    Cursor phoneCursor = context.getContentResolver().query(
-                        ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-                        null,
-                        ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ?",
-                        new String[]{id},
-                        null
-                    );
-                    
-                    if (phoneCursor != null && phoneCursor.moveToFirst()) {
-                        contact.number = phoneCursor.getString(phoneCursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
-                        phoneCursor.close();
+                    if (idIndex >= 0) {
+                        id = cursor.getString(idIndex);
+                    }
+                    if (nameIndex >= 0) {
+                        name = cursor.getString(nameIndex);
                     }
                     
-                    // Get email
-                    Cursor emailCursor = context.getContentResolver().query(
-                        ContactsContract.CommonDataKinds.Email.CONTENT_URI,
-                        null,
-                        ContactsContract.CommonDataKinds.Email.CONTACT_ID + " = ?",
-                        new String[]{id},
-                        null
-                    );
-                    
-                    if (emailCursor != null && emailCursor.moveToFirst()) {
-                        contact.email = emailCursor.getString(emailCursor.getColumnIndex(ContactsContract.CommonDataKinds.Email.ADDRESS));
-                        emailCursor.close();
+                    if (id != null && name != null) {
+                        Contact contact = new Contact();
+                        contact.name = name;
+                        
+                        // Get phone numbers
+                        Cursor phoneCursor = context.getContentResolver().query(
+                            ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                            null,
+                            ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ?",
+                            new String[]{id},
+                            null
+                        );
+                        
+                        if (phoneCursor != null) {
+                            int phoneNumberIndex = phoneCursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
+                            if (phoneCursor.moveToFirst() && phoneNumberIndex >= 0) {
+                                contact.number = phoneCursor.getString(phoneNumberIndex);
+                            }
+                            phoneCursor.close();
+                        }
+                        
+                        // Get email
+                        Cursor emailCursor = context.getContentResolver().query(
+                            ContactsContract.CommonDataKinds.Email.CONTENT_URI,
+                            null,
+                            ContactsContract.CommonDataKinds.Email.CONTACT_ID + " = ?",
+                            new String[]{id},
+                            null
+                        );
+                        
+                        if (emailCursor != null) {
+                            int emailAddressIndex = emailCursor.getColumnIndex(ContactsContract.CommonDataKinds.Email.ADDRESS);
+                            if (emailCursor.moveToFirst() && emailAddressIndex >= 0) {
+                                contact.email = emailCursor.getString(emailAddressIndex);
+                            }
+                            emailCursor.close();
+                        }
+                        
+                        contacts.add(contact);
                     }
-                    
-                    contacts.add(contact);
                 }
                 cursor.close();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error loading contacts", e);
         }
     }
     
