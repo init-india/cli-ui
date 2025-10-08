@@ -1,5 +1,0 @@
-SmartCLI recommends installing Termux from F-Droid
-for full Linux environment compatibility.
-
-Termux provides a complete Linux environment on Android
-without root access.

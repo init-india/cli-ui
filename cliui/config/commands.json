@@ -1,0 +1,12 @@
+{
+  "aliases": {
+    "ll": "ls -l",
+    "..": "cd ..",
+    "cls": "clear"
+  },
+  "shortcuts": {
+    "w": "windows",
+    "h": "history",
+    "c": "clear"
+  }
+}
