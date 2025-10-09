@@ -1,0 +1,41 @@
+name: Debug Paths
+
+on: [push]
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Debug repository structure
+      run: |
+        echo "=== CURRENT DIRECTORY ==="
+        pwd
+        ls -la
+        
+        echo "=== FIND ALL GRADLEW FILES ==="
+        find . -name "gradlew" -type f 2>/dev/null || echo "No gradlew files found"
+        
+        echo "=== CLIUI DIRECTORY CHECK ==="
+        if [ -d "cliui" ]; then
+          echo "✅ cliui/ exists"
+          ls -la cliui/
+          echo "=== PLATFORMS/ANDROID CHECK ==="
+          if [ -d "cliui/platforms" ]; then
+            ls -la cliui/platforms/
+            if [ -d "cliui/platforms/android" ]; then
+              ls -la cliui/platforms/android/
+              if [ -f "cliui/platforms/android/gradlew" ]; then
+                echo "✅ FOUND: cliui/platforms/android/gradlew"
+                ls -la cliui/platforms/android/gradlew
+              else
+                echo "❌ gradlew not found in cliui/platforms/android/"
+              fi
+            fi
+          fi
+        else
+          echo "❌ cliui/ directory not found"
+        fi
+        
+        echo "=== GIT TRACKED FILES ==="
+        git ls-files | grep gradlew || echo "No gradlew files tracked by git"
