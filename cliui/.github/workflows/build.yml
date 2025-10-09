@@ -15,7 +15,7 @@ jobs:
       uses: actions/checkout@v3
       
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/supython@v4
       with:
         python-version: '3.9'
         
@@ -41,7 +41,8 @@ jobs:
         
     - name: Make gradlew executable
       run: |
-        cd cliui/platforms/android
+        cd cliui  # First go into cliui directory
+        cd platforms/android
         chmod +x gradlew
         echo "✅ gradlew is now executable"
         
