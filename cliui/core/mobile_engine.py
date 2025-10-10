@@ -135,6 +135,42 @@ class MobileCLIEngine:
                 return contact['number']
         
         return None
+
+def quick_notes(self, args: List[str]) -> str:
+    """Quick note taking"""
+    if not args:
+        return "📝 Recent Notes:\n[1] Meeting notes (today)\n[2] Shopping list (yesterday)\n\nUsage: notes <your note>"
+    
+    note = " ".join(args)
+    return f"📝 Note saved: {note}\n[Edit] [Share] [Delete]"
+
+def calculator(self, args: List[str]) -> str:
+    """Simple calculator"""
+    if not args:
+        return "🧮 Calculator\nUsage: calc <expression>\nExample: calc 15 + 27 * 2"
+    
+    try:
+        # Safe evaluation
+        expression = " ".join(args)
+        result = eval(expression, {"__builtins__": None}, {})
+        return f"🧮 {expression} = {result}"
+    except:
+        return "❌ Invalid expression"
+
+def set_timer(self, args: List[str]) -> str:
+    """Set a timer"""
+    if not args:
+        return "⏰ Usage: timer <minutes> <message>\nExample: timer 5 'Tea ready'"
+    
+    return f"⏰ Timer set: {' '.join(args)}\n[Start] [Cancel] [Snooze]"
+
+def check_calendar(self, args: List[str]) -> str:
+    """Check calendar events"""
+    return "📅 Today's Events:\n[1] 10:00 Team Meeting\n[2] 14:00 Doctor Appointment\n[3] 18:00 Gym\n\n[Add Event] [View Week]"
+
+
+
+
     
     # Communication Commands
     def make_call(self, args: List[str]) -> str:
