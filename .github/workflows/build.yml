@@ -12,7 +12,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Install basic dependencies
+    - name: Install ALL dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y \
@@ -23,13 +23,22 @@ jobs:
           zip \
           unzip \
           curl \
-          wget
+          wget \
+          autoconf \
+          libtool \
+          pkg-config \
+          zlib1g-dev \
+          libncurses5-dev \
+          libncursesw5-dev \
+          cmake \
+          libffi-dev \
+          libssl-dev
           
-    - name: Install Buildozer
+    - name: Install Python packages
       run: |
-        pip3 install buildozer
+        pip3 install buildozer cython python-for-android
         
-    - name: Build with detailed logging
+    - name: Build APK
       run: |
         cd cliui/platforms/fdroid
         
