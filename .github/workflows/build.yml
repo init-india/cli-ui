@@ -33,9 +33,11 @@ jobs:
       run: |
         cd cliui/platforms/fdroid
         
-        # Let Buildozer handle everything - don't pre-setup anything
+        # Set environment for verbose logging
+        export BUILDOZER_LOG_LEVEL=2
+        
         echo "=== Starting Buildozer Build ==="
-        buildozer -v 2 android debug 2>&1 | tee full_build.log
+        buildozer -v android debug 2>&1 | tee full_build.log
         
         # If build fails, show critical errors
         if [ ${PIPESTATUS[0]} -ne 0 ]; then
