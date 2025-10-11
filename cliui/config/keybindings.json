@@ -1,9 +1,0 @@
-{
-  "touch_gestures": {
-    "swipe_up": "scroll_up",
-    "swipe_down": "scroll_down",
-    "swipe_left": "prev_window",
-    "swipe_right": "next_window",
-    "double_tap": "select_item"
-  }
-}
