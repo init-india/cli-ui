@@ -12,45 +12,46 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Install dependencies
+    - name: Install basic dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y python3-pip python3-dev openjdk-11-jdk git zip unzip
-        sudo apt-get install -y autoconf libtool pkg-config zlib1g-dev libncurses5-dev
-        sudo apt-get install -y libncursesw5-dev cmake libffi-dev libssl-dev
-        
-    - name: Install Python packages
+        sudo apt-get install -y \
+          python3-pip \
+          python3-dev \
+          openjdk-11-jdk \
+          git \
+          zip \
+          unzip \
+          curl \
+          wget
+          
+    - name: Install Buildozer
       run: |
-        pip3 install buildozer cython python-for-android
+        pip3 install buildozer
         
-    - name: Pre-setup Android SDK with accepted versions
-      run: |
-        mkdir -p ~/.buildozer/android/platform
-        
-        # Download command line tools
-        wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O /tmp/cmdline-tools.zip
-        mkdir -p ~/.buildozer/android/platform/android-sdk/cmdline-tools
-        unzip -q /tmp/cmdline-tools.zip -d ~/.buildozer/android/platform/android-sdk/cmdline-tools
-        mv ~/.buildozer/android/platform/android-sdk/cmdline-tools/cmdline-tools ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest
-        
-        # Set environment
-        export ANDROID_HOME="$HOME/.buildozer/android/platform/android-sdk"
-        export ANDROID_SDK_ROOT="$HOME/.buildozer/android/platform/android-sdk"
-        export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH"
-        
-        # Accept all licenses and install older, accepted build-tools
-        yes | sdkmanager --licenses
-        sdkmanager "platform-tools" "build-tools;33.0.0" "platforms;android-33" "tools"
-        
-    - name: Build APK
+    - name: Build with detailed logging
       run: |
         cd cliui/platforms/fdroid
         
-        # Set environment for buildozer
-        export ANDROID_HOME="$HOME/.buildozer/android/platform/android-sdk"
-        export ANDROID_SDK_ROOT="$HOME/.buildozer/android/platform/android-sdk"
+        # Let Buildozer handle everything - don't pre-setup anything
+        echo "=== Starting Buildozer Build ==="
+        buildozer -v 2 android debug 2>&1 | tee full_build.log
         
-        buildozer -v android debug
+        # If build fails, show critical errors
+        if [ ${PIPESTATUS[0]} -ne 0 ]; then
+          echo "=== BUILD FAILED - CRITICAL ERRORS ==="
+          grep -i "error\|failed\|missing\|not found" full_build.log | head -20
+          echo "=== LAST 30 LINES ==="
+          tail -30 full_build.log
+          exit 1
+        fi
+        
+    - name: Upload build logs
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-logs
+        path: cliui/platforms/fdroid/full_build.log
         
     - name: Upload APK
       if: success()
