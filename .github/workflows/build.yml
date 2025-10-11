@@ -1,11 +1,10 @@
-cat > .github/workflows/build.yml << 'EOF'
 name: Build Android APK
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   pull_request:
-    branches: [ main, master ]
+    branches: [main, master]
 
 jobs:
   build:
@@ -27,4 +26,3 @@ jobs:
         name: smartcli-apk
         path: cliui/platforms/fdroid/bin/*.apk
         retention-days: 30
-EOF
