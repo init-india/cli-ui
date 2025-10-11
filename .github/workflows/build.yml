@@ -1,3 +1,5 @@
+# Use the manual setup version
+cat > .github/workflows/build.yml << 'EOF'
 name: Build Android APK
 
 on:
@@ -17,45 +19,19 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y python3-pip python3-dev openjdk-11-jdk git zip unzip
         sudo apt-get install -y autoconf libtool pkg-config zlib1g-dev libncurses5-dev
-        sudo apt-get install -y libncursesw5-dev cmake libffi-dev libssl-dev wget curl
+        sudo apt-get install -y libncursesw5-dev cmake libffi-dev libssl-dev
         
-    - name: Install Buildozer
-      run: pip3 install buildozer cython
-        
-    - name: Debug environment
+    - name: Install Python packages
       run: |
-        echo "=== Environment Info ==="
-        python3 --version
-        pip3 --version
-        java -version
-        which git
-        echo "========================"
+        pip3 install buildozer cython python-for-android
         
-    - name: Build with detailed logging
+    - name: Build APK (skip clean to avoid python-for-android issue)
       run: |
         cd cliui/platforms/fdroid
         
-        # Set environment variables for Buildozer
-        export BUILDOZER_LOG_LEVEL=2
-        
-        # Clean and build with full logs
-        buildozer android clean
-        buildozer -v 2 android debug 2>&1 | tee full_build.log
-        
-        # If build fails, show the last 50 lines for quick debugging
-        if [ ${PIPESTATUS[0]} -ne 0 ]; then
-          echo "=== BUILD FAILED ==="
-          echo "Last 50 lines of log:"
-          tail -50 full_build.log
-          echo "===================="
-          exit 1
-        fi
-        
-    - name: Upload full build log
-      uses: actions/upload-artifact@v4
-      with:
-        name: full-build-log
-        path: cliui/platforms/fdroid/full_build.log
+        # Skip the clean step and build directly
+        # This allows buildozer to download python-for-android during build
+        buildozer -v android debug
         
     - name: Upload APK
       if: success()
@@ -63,3 +39,4 @@ jobs:
       with:
         name: smartcli-apk
         path: cliui/platforms/fdroid/bin/*.apk
+EOF
