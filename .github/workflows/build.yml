@@ -1,3 +1,4 @@
+cat > .github/workflows/build.yml << 'EOF'
 name: Build Android APK
 
 on:
@@ -41,68 +42,32 @@ jobs:
       run: |
         pip3 install buildozer cython python-for-android
         
-    - name: Pre-setup Android environment to avoid license issues
-      run: |
-        mkdir -p ~/.buildozer/android/platform
-        
-        # Download and setup Android Command Line Tools
-        wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O /tmp/cmdline-tools.zip
-        mkdir -p ~/.buildozer/android/platform/android-sdk/cmdline-tools
-        unzip -q /tmp/cmdline-tools.zip -d ~/.buildozer/android/platform/android-sdk/cmdline-tools
-        mv ~/.buildozer/android/platform/android-sdk/cmdline-tools/cmdline-tools ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest
-        
-        # Set environment
-        export ANDROID_SDK_ROOT="$HOME/.buildozer/android/platform/android-sdk"
-        export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH"
-        
-        # Accept ALL licenses and install stable versions
-        yes | sdkmanager --licenses
-        sdkmanager "platform-tools" "build-tools;33.0.0" "platforms;android-33" "tools"
-        
-        # Verify AIDL is available
-        $ANDROID_SDK_ROOT/build-tools/33.0.0/aidl --help || echo "AIDL check completed"
-        
-    - name: Build APK with comprehensive error handling
+    - name: Build with MAXIMUM logging
       run: |
         cd cliui/platforms/fdroid
         
-        # Set environment variables
-        export ANDROID_SDK_ROOT="$HOME/.buildozer/android/platform/android-sdk"
-        export ANDROID_NDK_HOME="$HOME/.buildozer/android/platform/android-ndk-r25b"
-        export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH"
+        # Set maximum log level
+        export BUILDOZER_LOG_LEVEL=2
         
-        echo "=== Verifying Environment ==="
-        python3 --version
-        pip3 --version
-        java -version
-        which git
-        which cython
-        echo "Cython version: $(cython --version 2>/dev/null || echo 'Cython available')"
-        
-        echo "=== Starting Build ==="
+        echo "=== Starting Build with Maximum Logging ==="
         buildozer -v android debug 2>&1 | tee full_build.log
         
-        # Check build status and show specific errors
+        # If build fails, show the ACTUAL error
         if [ ${PIPESTATUS[0]} -ne 0 ]; then
-          echo "=== BUILD FAILED - ANALYZING ERRORS ==="
-          echo "Cython check: $(which cython)"
-          echo "Java check: $(which java)"
-          echo "Android SDK: $ANDROID_SDK_ROOT"
-          echo "=== ERROR SUMMARY ==="
-          grep -i "error\|failed\|missing\|not found" full_build.log | head -30
-          echo "=== LAST 50 LINES ==="
-          tail -50 full_build.log
+          echo "=== BUILD FAILED - SHOWING ACTUAL ERROR ==="
+          echo "=== LAST 100 LINES OF LOG ==="
+          tail -100 full_build.log
+          echo "=== SEARCHING FOR ERRORS ==="
+          grep -A 5 -B 5 -i "error\|failed\|missing\|not found\|exception" full_build.log | head -50
           exit 1
         fi
         
-    - name: Upload build logs for debugging
+    - name: Upload complete build logs
       if: failure()
       uses: actions/upload-artifact@v4
       with:
-        name: build-debug-logs
-        path: |
-          cliui/platforms/fdroid/full_build.log
-          cliui/platforms/fdroid/.buildozer/*.log
+        name: complete-build-logs
+        path: cliui/platforms/fdroid/full_build.log
         
     - name: Upload APK
       if: success()
@@ -110,4 +75,4 @@ jobs:
       with:
         name: smartcli-apk
         path: cliui/platforms/fdroid/bin/*.apk
-        retention-days: 30
+EOF
