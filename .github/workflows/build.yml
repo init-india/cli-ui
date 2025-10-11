@@ -32,12 +32,27 @@ jobs:
           libncursesw5-dev \
           cmake \
           libffi-dev \
-          libssl-dev
+          libssl-dev \
+          wget
           
     - name: Install Python dependencies
       run: |
         pip3 install buildozer cython
       
+    - name: Install Android SDK and build-tools
+      run: |
+        mkdir -p ~/.android
+        touch ~/.android/repositories.cfg
+        
+        # Download and setup Android SDK
+        wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip -O cmdline-tools.zip
+        mkdir -p ~/.buildozer/android/platform/android-sdk/cmdline-tools
+        unzip cmdline-tools.zip -d ~/.buildozer/android/platform/android-sdk/cmdline-tools
+        mv ~/.buildozer/android/platform/android-sdk/cmdline-tools/cmdline-tools ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest
+        
+        # Accept licenses and install build-tools
+        yes | ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=/home/runner/.buildozer/android/platform/android-sdk "build-tools;33.0.0" "platforms;android-33" "platform-tools"
+        
     - name: Build APK
       run: |
         cd cliui/platforms/fdroid
