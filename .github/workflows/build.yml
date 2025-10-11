@@ -3,8 +3,6 @@ name: Build Android APK
 on:
   push:
     branches: [main, master]
-  pull_request:
-    branches: [main, master]
 
 jobs:
   build:
@@ -14,7 +12,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Setup environment
+    - name: Install system dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y \
@@ -39,23 +37,34 @@ jobs:
       run: |
         pip3 install buildozer cython
       
-    - name: Install Android SDK and build-tools
+    - name: Pre-download Android SDK and NDK
       run: |
-        mkdir -p ~/.android
-        touch ~/.android/repositories.cfg
+        mkdir -p ~/.buildozer/android/platform
         
-        # Download and setup Android SDK
-        wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip -O cmdline-tools.zip
+        # Download and setup Android Command Line Tools
+        wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O /tmp/cmdline-tools.zip
         mkdir -p ~/.buildozer/android/platform/android-sdk/cmdline-tools
-        unzip cmdline-tools.zip -d ~/.buildozer/android/platform/android-sdk/cmdline-tools
+        unzip -q /tmp/cmdline-tools.zip -d ~/.buildozer/android/platform/android-sdk/cmdline-tools
         mv ~/.buildozer/android/platform/android-sdk/cmdline-tools/cmdline-tools ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest
         
-        # Accept licenses and install build-tools
-        yes | ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=/home/runner/.buildozer/android/platform/android-sdk "build-tools;33.0.0" "platforms;android-33" "platform-tools"
+        # Set environment variables
+        echo "ANDROID_HOME=$HOME/.buildozer/android/platform/android-sdk" >> $GITHUB_ENV
+        echo "ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk" >> $GITHUB_ENV
+        echo "PATH=$HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin:$PATH" >> $GITHUB_ENV
+        
+        # Accept licenses and install required packages
+        yes | ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/.buildozer/android/platform/android-sdk "build-tools;33.0.0" "platforms;android-33" "platform-tools" "tools"
+        
+        # Pre-download NDK to avoid buildozer download issues
+        wget -q https://dl.google.com/android/repository/android-ndk-r25b-linux.zip -O /tmp/ndk.zip
+        unzip -q /tmp/ndk.zip -d ~/.buildozer/android/platform/
         
     - name: Build APK
       run: |
         cd cliui/platforms/fdroid
+        export ANDROID_HOME="$HOME/.buildozer/android/platform/android-sdk"
+        export ANDROID_SDK_ROOT="$HOME/.buildozer/android/platform/android-sdk"
+        export PATH="$HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin:$PATH"
         buildozer -v android debug
         
     - name: Upload APK
