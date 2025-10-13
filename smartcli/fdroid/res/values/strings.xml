@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">SmartCLI</string>
+    <string name="auth_title">SmartCLI Authentication</string>
+    <string name="auth_subtitle">Use fingerprint or PIN to unlock</string>
+    <string name="auth_description">Authenticate to access SmartCLI launcher</string>
+    <string name="touch_fingerprint">Touch fingerprint sensor</string>
+    <string name="enter_pin">Enter PIN</string>
+    <string name="auth_error">Authentication error</string>
+    <string name="auth_failed">Authentication failed</string>
+    <string name="emergency_call">Emergency Call</string>
+    <string name="lock_device">Lock Device</string>
+    <string name="exit_app">Exit App</string>
+    <string name="cli_prompt">user@smartcli:~$</string>
+    <string name="system_ready">System ready</string>
+    <string name="type_help">Type \'help\' for commands</string>
+</resources>

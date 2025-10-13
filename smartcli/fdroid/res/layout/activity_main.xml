@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#000000"
+    android:keepScreenOn="true">
+
+    <!-- Status Bar -->
+    <TextView
+        android:id="@+id/statusBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="8dp"
+        android:textColor="#00FF00"
+        android:textSize="12sp"
+        android:fontFamily="monospace"
+        android:background="#111111"
+        android:text="🔋??% 📱?/?GB 💾?/?GB 🔴off 📍off 🔵off 🕒??-???-????;??:??" />
+
+    <!-- Notification Bar -->
+    <TextView
+        android:id="@+id/notificationBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="4dp"
+        android:textColor="#FFFF00"
+        android:textSize="10sp"
+        android:fontFamily="monospace"
+        android:background="#222222"
+        android:text="System starting..." />
+
+    <!-- Lock Screen -->
+    <LinearLayout
+        android:id="@+id/lockScreen"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="#000000">
+
+        <ImageView
+            android:id="@+id/fingerprintIcon"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:src="@drawable/ic_fingerprint"
+            android:tint="#00FF00"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:id="@+id/authMessage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Touch fingerprint sensor to unlock"
+            android:textColor="#00FF00"
+            android:textSize="16sp"
+            android:fontFamily="monospace"
+            android:layout_marginBottom="32dp" />
+
+        <Button
+            android:id="@+id/emergencyButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Emergency Call"
+            android:textColor="#FF0000"
+            android:backgroundTint="#33000000"
+            android:fontFamily="monospace" />
+
+    </LinearLayout>
+
+    <!-- CLI Interface -->
+    <LinearLayout
+        android:id="@+id/cliContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <ScrollView
+            android:id="@+id/cliScrollView"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:padding="8dp"
+            android:scrollbars="vertical"
+            android:fadeScrollbars="false">
+
+            <TextView
+                android:id="@+id/cliOutput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#00FF00"
+                android:textSize="14sp"
+                android:fontFamily="monospace"
+                android:textIsSelectable="true"
+                android:lineSpacingExtra="2dp" />
+
+        </ScrollView>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="8dp"
+            android:background="#111111">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="user@smartcli:~$"
+                android:textColor="#00FF00"
+                android:textSize="14sp"
+                android:fontFamily="monospace"
+                android:layout_gravity="center_vertical" />
+
+            <EditText
+                android:id="@+id/cliInput"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:maxLines="1"
+                android:imeOptions="actionDone"
+                android:inputType="text|textMultiLine|textNoSuggestions"
+                android:textColor="#00FF00"
+                android:textSize="14sp"
+                android:fontFamily="monospace"
+                android:backgroundTint="#00FF00"
+                android:layout_marginStart="8dp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</LinearLayout>

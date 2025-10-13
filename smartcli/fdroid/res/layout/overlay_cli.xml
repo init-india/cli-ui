@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#80111111"
+    android:padding="8dp">
+
+    <EditText
+        android:id="@+id/overlayInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Type command..."
+        android:textColor="#00FF00"
+        android:textColorHint="#00FF00"
+        android:backgroundTint="#00FF00"
+        android:maxLines="1"
+        android:imeOptions="actionDone"
+        android:inputType="text"
+        android:visibility="gone"
+        android:fontFamily="monospace" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="SmartCLI"
+        android:textColor="#00FF00"
+        android:textSize="12sp"
+        android:fontFamily="monospace"
+        android:padding="4dp"
+        android:background="#80111111" />
+
+</FrameLayout>
