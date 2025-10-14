@@ -1,0 +1,51 @@
+# .github/workflows/android-fdroid-ci.yml
+name: Android F-Droid CI
+
+on:
+  push:
+    branches: [ main, develop, master ]
+  pull_request:
+    branches: [ main, develop, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: 'gradle'
+
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+
+    - name: Make gradlew executable
+      run: chmod +x ./smartcli/gradlew
+
+    - name: Build Core Module
+      run: |
+        cd smartcli
+        ./gradlew :core:build
+
+    - name: Build F-Droid Debug
+      run: |
+        cd smartcli
+        ./gradlew :fdroid:assembleDebug
+
+    - name: Run Tests
+      run: |
+        cd smartcli
+        ./gradlew :core:test :fdroid:testDebugUnitTest
+
+    - name: Upload APKs
+      uses: actions/upload-artifact@v4
+      with:
+        name: fdroid-apks
+        path: smartcli/fdroid/build/outputs/apk/
+        retention-days: 7

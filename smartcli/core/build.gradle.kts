@@ -1,14 +1,24 @@
+// smartcli/core/build.gradle.kts
 plugins {
-    kotlin("jvm") version "1.9.0"
+    id("org.jetbrains.kotlin.jvm") version "1.9.22"
 }
 
-repositories {
-    mavenCentral()
-    google()
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+kotlin {
+    jvmToolchain(8)
 }
 
 dependencies {
-    implementation(kotlin("stdlib"))
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.22")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
-    implementation("androidx.annotation:annotation:1.7.0")
+    
+    testImplementation("junit:junit:4.13.2")
+}
+
+tasks.withType<Test> {
+    useJUnit()
 }

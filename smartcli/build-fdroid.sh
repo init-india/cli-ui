@@ -1,17 +1,16 @@
 #!/bin/bash
+# smartcli/build-fdroid.sh
 
-echo "Building SmartCLI F-Droid version..."
+cd "$(dirname "$0")"
 
-# Clean previous builds
-./gradlew clean
+# Make gradlew executable
+chmod +x ./gradlew
 
-# Build release APK
+# Build core module
+./gradlew :core:build
+
+# Build F-Droid app
 ./gradlew :fdroid:assembleRelease
 
-if [ $? -eq 0 ]; then
-    echo "Build successful! APK location:"
-    find . -name "*.apk" -type f | grep release
-else
-    echo "Build failed!"
-    exit 1
-fi
+echo "Build complete! APK location:"
+find . -name "*.apk" -type f

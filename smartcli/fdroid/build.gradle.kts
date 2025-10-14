@@ -1,7 +1,9 @@
+// smartcli/fdroid/build.gradle.kts
 plugins {
     id("com.android.application")
     id("kotlin-android")
     id("kotlin-parcelize")
+    id("kotlin-kapt")
 }
 
 android {
@@ -75,7 +77,6 @@ dependencies {
 
     // Kotlin Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
 
     // Room Database
     implementation("androidx.room:room-runtime:2.6.1")
