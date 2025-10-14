@@ -1,4 +1,4 @@
-# .github/workflows/kotlin-ci.yml
+# ..github/workflows/kotlin-ci.yml
 name: Kotlin CI
 
 on:
