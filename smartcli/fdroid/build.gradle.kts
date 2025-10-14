@@ -1,7 +1,7 @@
 // smartcli/fdroid/build.gradle.kts
 plugins {
     id("com.android.application")
-    id("kotlin-android")
+    id("org.jetbrains.kotlin.android")
     id("kotlin-parcelize")
     id("kotlin-kapt")
 }
