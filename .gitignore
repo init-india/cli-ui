@@ -1,31 +1,14 @@
-# Update .gitignore to prevent future issues
-cat > .gitignore << 'EOF'
+.gradle/
+
+# General
+.DS_Store
+*.log
+.env
+*.iml
+.idea/
+
 # Build artifacts
-.buildozer/
-bin/
+build/
+dist/
 *.apk
 *.aab
-dist/
-
-# Python cache
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-
-# Environment
-.env
-venv/
-.venv/
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
-build.log
-
-# Local configurations
-local_config.json
-EOF
