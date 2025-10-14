@@ -49,3 +49,13 @@ jobs:
         name: fdroid-apks
         path: smartcli/fdroid/build/outputs/apk/
         retention-days: 7
+
+    - name: Upload Build Reports
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-reports
+        path: |
+          smartcli/core/build/reports/
+          smartcli/fdroid/build/reports/
+        retention-days: 7

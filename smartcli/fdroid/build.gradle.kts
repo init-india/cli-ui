@@ -54,6 +54,22 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
+    // FIX: Custom source sets for non-standard directory structure
+    sourceSets {
+        getByName("main") {
+            manifest.srcFile("AndroidManifest.xml")
+            res.srcDirs("res")
+            java.srcDirs("src")
+            assets.srcDirs("assets")
+        }
+        getByName("test") {
+            java.srcDirs("test")
+        }
+        getByName("androidTest") {
+            java.srcDirs("androidTest")
+        }
+    }
 }
 
 dependencies {
