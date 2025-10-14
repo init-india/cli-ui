@@ -1,0 +1,58 @@
+# .github/workflows/kotlin-ci.yml
+name: Kotlin CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: 'gradle'
+    
+    - name: Grant execute permission for Gradle Wrapper
+      run: chmod +x ./gradlew
+    
+    - name: Validate Gradle Wrapper
+      uses: gradle/wrapper-validation-action@v1
+    
+    - name: Build with Gradle
+      run: ./gradlew build
+    
+    - name: Run tests
+      run: ./gradlew test
+    
+    - name: Run static analysis
+      run: ./gradlew detekt ktlintCheck
+    
+    - name: Run dependency check
+      run: ./gradlew dependencyCheckAnalyze
+    
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: test-results
+        path: |
+          build/reports/
+          build/test-results/
+    
+    - name: Upload build reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: build-reports
+        path: build/reports/
+        retention-days: 7
