@@ -12,7 +12,7 @@
       android:pathData="M12,17c0.55,0 1,-0.45 1,-1v-4c0,-0.55 -0.45,-1 -1,-1s-1,0.45 -1,1v4c0,0.55 0.45,1 1,1z"/>
   <circle
       android:fillColor="@android:color/white"
-      android:cx="12"
-      android:cy="8"
-      android:r="1"/>
+      android:centerX="12"
+      android:centerY="8"
+      android:radius="1"/>
 </vector>
