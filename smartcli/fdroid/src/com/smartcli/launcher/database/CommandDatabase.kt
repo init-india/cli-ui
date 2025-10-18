@@ -3,6 +3,8 @@ package com.smartcli.launcher.database
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import java.util.Date
+
 
 @Database(
     entities = [CommandHistory::class, UserAlias::class],
