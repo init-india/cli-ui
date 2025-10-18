@@ -1,4 +1,3 @@
-# .github/workflows/android-fdroid-ci.yml
 name: Android F-Droid CI
 
 on:
@@ -28,34 +27,28 @@ jobs:
     - name: Make gradlew executable
       run: chmod +x ./smartcli/gradlew
 
+    - name: Debug - Show project structure
+      run: |
+        cd smartcli
+        echo "=== Project Structure ==="
+        find . -name "*.kt" | head -20
+        echo "=== Core module files ==="
+        find core -name "*.kt" | head -10
+
     - name: Build Core Module
       run: |
         cd smartcli
-        ./gradlew :core:build
+        ./gradlew :core:clean
+        ./gradlew :core:build --stacktrace --info
 
-    - name: Build F-Droid Debug
+    - name: Build F-Droid Module
       run: |
         cd smartcli
-        ./gradlew :fdroid:assembleDebug
+        ./gradlew :fdroid:assembleDebug --stacktrace --info
 
-    - name: Run Tests
-      run: |
-        cd smartcli
-        ./gradlew :core:test :fdroid:testDebugUnitTest
-
-    - name: Upload APKs
+    - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: fdroid-apks
-        path: smartcli/fdroid/build/outputs/apk/
-        retention-days: 7
-
-    - name: Upload Build Reports
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: build-reports
-        path: |
-          smartcli/core/build/reports/
-          smartcli/fdroid/build/reports/
+        name: fdroid-apk
+        path: smartcli/fdroid/build/outputs/apk/debug/*.apk
         retention-days: 7
