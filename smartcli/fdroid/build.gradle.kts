@@ -18,8 +18,18 @@ android {
         versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+ javaCompileOptions {
+            annotationProcessorOptions {
+                arguments += mapOf(
+                    "room.schemaLocation" to "$projectDir/schemas",
+                    "room.incremental" to "true"
+                )
+            }
+        }
     }
 
+    
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -94,6 +104,10 @@ dependencies {
     // Fragment & Activity
     implementation("androidx.activity:activity-ktx:1.8.2")
     implementation("androidx.fragment:fragment-ktx:1.6.2")
+
+ implementation("androidx.recyclerview:recyclerview:1.3.2")
+   
+
     
     // Security & Biometric
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
