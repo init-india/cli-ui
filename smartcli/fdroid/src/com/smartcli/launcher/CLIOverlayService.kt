@@ -13,6 +13,15 @@ import android.widget.EditText
 import android.widget.FrameLayout
 import androidx.core.view.isVisible
 
+import com.smartcli.core.cli.CommandProcessor
+import com.smartcli.core.cli.TUIFormatter
+import com.smartcli.core.system.AuthManager
+import com.smartcli.core.system.InterruptionHandler
+import com.smartcli.core.system.LinuxCommandExecutor
+
+
+
+
 class CLIOverlayService : Service() {
 
     private var overlayView: View? = null

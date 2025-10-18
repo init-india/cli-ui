@@ -27,10 +27,13 @@ import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
+
 import com.smartcli.core.cli.CommandProcessor
 import com.smartcli.core.cli.TUIFormatter
 import com.smartcli.core.system.AuthManager
 import com.smartcli.core.system.InterruptionHandler
+import com.smartcli.core.system.LinuxCommandExecutor
+
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
