@@ -3,7 +3,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("kotlin-parcelize")
-    id("com.google.devtools.ksp") version "1.9.22-1.0.16"  // KSP only
+    id("com.google.devtools.ksp")  // REMOVED version - it's already in classpath
 }
 
 android {
@@ -65,7 +65,6 @@ android {
         }
     }
 
-    // FIX: Custom source sets for non-standard directory structure
     sourceSets {
         getByName("main") {
             manifest.srcFile("AndroidManifest.xml")
@@ -81,7 +80,6 @@ android {
         }
     }
 }
-
 
 dependencies {
     implementation(project(":core"))
@@ -114,11 +112,10 @@ dependencies {
     // Room Database with KSP
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
-    ksp("androidx.room:room-compiler:2.6.1")  // Using KSP, not kapt
+    ksp("androidx.room:room-compiler:2.6.1")
 
     // Testing
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
-
 }
