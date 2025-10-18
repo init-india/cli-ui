@@ -18,9 +18,9 @@ android {
         versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    }
 
-  javaCompileOptions {
+        // FIX: Move javaCompileOptions inside defaultConfig
+        javaCompileOptions {
             annotationProcessorOptions {
                 arguments += mapOf(
                     "room.schemaLocation" to "$projectDir/schemas",
@@ -28,10 +28,8 @@ android {
                     "room.expandProjection" to "true"
                 )
             }
-}
-
-
-
+        }
+    }
 
     buildTypes {
         release {
@@ -83,6 +81,12 @@ android {
             java.srcDirs("androidTest")
         }
     }
+}
+
+// Add kapt configuration (at the bottom, outside android block)
+kapt {
+    correctErrorTypes = true
+    useBuildCache = true
 }
 
 dependencies {
