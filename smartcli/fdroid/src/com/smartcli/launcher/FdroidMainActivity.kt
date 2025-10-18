@@ -34,11 +34,8 @@ import com.smartcli.core.system.AuthManager
 import com.smartcli.core.system.InterruptionHandler
 import com.smartcli.core.system.LinuxCommandExecutor
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.util.concurrent.Executor
+
+
 
 class FdroidMainActivity : AppCompatActivity() {
 
