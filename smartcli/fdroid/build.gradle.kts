@@ -3,7 +3,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("kotlin-parcelize")
-    id("kotlin-kapt")
+    id("com.google.devtools.ksp") version "1.9.22-1.0.16"  // KSP only
 }
 
 android {
@@ -19,7 +19,8 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
- javaCompileOptions {
+        // KSP configuration for Room
+        javaCompileOptions {
             annotationProcessorOptions {
                 arguments += mapOf(
                     "room.schemaLocation" to "$projectDir/schemas",
@@ -29,7 +30,6 @@ android {
         }
     }
 
-    
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -82,10 +82,6 @@ android {
     }
 }
 
-// kapt configuration
-kapt {
-    correctErrorTypes = true
-}
 
 dependencies {
     implementation(project(":core"))
@@ -104,10 +100,6 @@ dependencies {
     // Fragment & Activity
     implementation("androidx.activity:activity-ktx:1.8.2")
     implementation("androidx.fragment:fragment-ktx:1.6.2")
-
- implementation("androidx.recyclerview:recyclerview:1.3.2")
-   
-
     
     // Security & Biometric
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
@@ -119,14 +111,14 @@ dependencies {
     // Kotlin Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
-    // Room Database - UPDATED VERSIONS
+    // Room Database with KSP
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
-    kapt("androidx.room:room-compiler:2.6.1")
+    ksp("androidx.room:room-compiler:2.6.1")  // Using KSP, not kapt
 
     // Testing
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
-    androidTestImplementation("androidx.room:room-testing:2.6.1")
+
 }
