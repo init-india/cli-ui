@@ -14,5 +14,5 @@
       android:fillColor="@android:color/white"
       android:centerX="12"
       android:centerY="8"
-      android:radius="1"/>
+      android:radius="1dp"/>
 </vector>
