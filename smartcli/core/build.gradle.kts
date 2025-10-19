@@ -42,7 +42,17 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
     testImplementation("junit:junit:4.13.2")
+ // Bluetooth
+    implementation("androidx.core:core:1.12.0")
+    
+    // Telephony
+    implementation("androidx.telephony:telephony:1.0.0")
+
+
 }
+
+
+
 
 tasks.withType<Test> {
     useJUnit()
